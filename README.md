@@ -1,6 +1,6 @@
 # HeadShake plugin for X-Plane 10/11
 
-HeadShake is an X-Plane 10 camera plugin wich adds some nice POV effects while flying in virtual cockpit view.
+HeadShake is an X-Plane camera plugin wich adds some nice POV effects while flying in virtual cockpit view.
 It is free, opensource and available for Windows, Linux and Mac in both 64 and 32 bit versions.
 This plugin was developed by [SimCoders.com](https://www.simcoders.com) and maintained by the community.
 
