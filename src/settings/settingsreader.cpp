@@ -12,6 +12,7 @@
 #include "cameracommands/lookaheadcameracommand.h"
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
+#include "cameracommands/taxilookaheadcameracommand.h"
 #include "cameracommands/guncameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
@@ -82,6 +83,18 @@ void SettingsReader::visit(GroundRollCameraCommand &command)
         command.set_enabled(mMap["cameracommand.groundroll.enabled"].compare("1") == 0);
     if (mMap.find("cameracommand.groundroll.response") != mMap.end())
         command.set_response(atof(mMap["cameracommand.groundroll.response"].c_str()));
+}
+
+void SettingsReader::visit(TaxiLookAheadCameraCommand &command)
+{
+    if (mMap.find("cameracommand.taxilookahead.enabled") != mMap.end())
+        command.set_enabled(mMap["cameracommand.taxilookahead.enabled"].compare("1") == 0);
+    if (mMap.find("cameracommand.taxilookahead.rudder.response") != mMap.end())
+        command.set_rudder_response(atof(mMap["cameracommand.taxilookahead.rudder.response"].c_str()));
+    if (mMap.find("cameracommand.taxilookahead.turn.response") != mMap.end())
+        command.set_turn_response(atof(mMap["cameracommand.taxilookahead.turn.response"].c_str()));
+    if (mMap.find("cameracommand.taxilookahead.speed.max") != mMap.end())
+        command.set_max_taxi_speed(atof(mMap["cameracommand.taxilookahead.speed.max"].c_str()));
 }
 
 void SettingsReader::visit(TouchdownCameraCommand &command)

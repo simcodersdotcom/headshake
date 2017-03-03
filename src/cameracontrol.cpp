@@ -15,6 +15,7 @@
 #include "cameracommands/gforcecameracommand.h"
 #include "cameracommands/lookaheadcameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
+#include "cameracommands/taxilookaheadcameracommand.h"
 #include "cameracommands/guncameracommand.h"
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
@@ -38,6 +39,7 @@ CameraControl::CameraControl()
     mCommands.push_back(new PistonEngineCameraCommand);
     mCommands.push_back(new RotorCameraCommand);
     mCommands.push_back(new GroundRollCameraCommand);
+    mCommands.push_back(new TaxiLookAheadCameraCommand);
     mCommands.push_back(new GunCameraCommand);
     mCommands.push_back(new TouchdownCameraCommand);
     // Store the size in a private property

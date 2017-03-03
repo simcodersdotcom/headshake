@@ -8,6 +8,7 @@ class PistonEngineCameraCommand;
 class RotorCameraCommand;
 class GunCameraCommand;
 class GroundRollCameraCommand;
+class TaxiLookAheadCameraCommand;
 class TouchdownCameraCommand;
 class IVisitor
 {
@@ -23,6 +24,7 @@ class IVisitor
         virtual void visit(RotorCameraCommand&) = 0;
         virtual void visit(GunCameraCommand&) = 0;
         virtual void visit(GroundRollCameraCommand&) = 0;
+        virtual void visit(TaxiLookAheadCameraCommand&) = 0;
         virtual void visit(TouchdownCameraCommand&) = 0;
 };
 
