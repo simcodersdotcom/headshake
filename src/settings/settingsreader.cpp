@@ -93,8 +93,8 @@ void SettingsReader::visit(TaxiLookAheadCameraCommand &command)
         command.set_rudder_response(atof(mMap["cameracommand.taxilookahead.rudder.response"].c_str()));
     if (mMap.find("cameracommand.taxilookahead.turn.response") != mMap.end())
         command.set_turn_response(atof(mMap["cameracommand.taxilookahead.turn.response"].c_str()));
-    if (mMap.find("cameracommand.taxilookahead.speed.max") != mMap.end())
-        command.set_max_taxi_speed(atof(mMap["cameracommand.taxilookahead.speed.max"].c_str()));
+    if (mMap.find("cameracommand.taxilookahead.lean.response") != mMap.end())
+        command.set_lean_response(atof(mMap["cameracommand.taxilookahead.lean.response"].c_str()));
 }
 
 void SettingsReader::visit(TouchdownCameraCommand &command)

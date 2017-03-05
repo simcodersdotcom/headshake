@@ -22,18 +22,20 @@ class TaxiLookAheadCameraCommand : public CameraCommand
         float get_rudder_response() const;
         void set_turn_response(float);
         float get_turn_response() const;
-        void set_max_taxi_speed(float);
-        float get_max_taxi_speed() const;
+        void set_lean_response(float);
+        float get_lean_response() const;
     protected:
     private:
         std::vector<float> mRudderFilter;
         std::vector<float> mTurnFilter;
         std::vector<float> mGroundSpeedFilter;
+        float mLastZ;
+        float mLastY;
         float mLastYaw;
         float mLastRoll;
         float mTurnResponse;
         float mRudderResponse;
-        float mMaxTaxiSpeed;
+        float mLeanResponse;
         XPLMDataRef mOnGroundDataRef;
         XPLMDataRef mTurnDataRef;
         XPLMDataRef mGroundSpeedDataRef;

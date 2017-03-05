@@ -18,8 +18,10 @@ TaxiLookAheadCameraCommand::TaxiLookAheadCameraCommand()
 
     // Setup the private vars
     mRudderResponse     = 25;
+    mLeanResponse       = 25;
     mTurnResponse       = 25;
-    mMaxTaxiSpeed       = 20;
+    mLastY              = 0;
+    mLastZ              = 0;
     mLastYaw            = 0;
     mLastRoll           = 0;
 }
@@ -33,9 +35,11 @@ void TaxiLookAheadCameraCommand::execute(CameraPosition &position)
 {
     (void)position;
 
-    float acc, rudderAcc, turnAcc, groundSpeedAcc, currentTurn, currentRudder, currentGroundSpeed;
+    float blend, acc, lean, leanInput, rudderInput, turnInput, groundSpeedAcc, currentTurn, currentRudder, currentGroundSpeed;
 
     // Restore the initial yaw & roll
+    position.y     -= mLastY;
+    position.z     -= mLastZ;
     position.yaw   -= mLastYaw;
     position.roll  -= mLastRoll;
 
@@ -43,6 +47,8 @@ void TaxiLookAheadCameraCommand::execute(CameraPosition &position)
     if (!pEnabled)
     {
         // Reset the state vars
+        mLastY          = 0;
+        mLastZ          = 0;
         mLastYaw        = 0;
         mLastRoll       = 0;
         return;
@@ -58,17 +64,18 @@ void TaxiLookAheadCameraCommand::execute(CameraPosition &position)
         currentGroundSpeed      = 0;
     }
 
-    // Rudder
+    // Rudder & lean input
     mRudderFilter.insert(mRudderFilter.begin(), currentRudder);
     if( mRudderFilter.size() > 30 )
         mRudderFilter.pop_back();
-    rudderAcc = average(mRudderFilter) * ( mRudderResponse / 100.0f ) * 90.0f;
+    rudderInput = average(mRudderFilter) * ( mRudderResponse / 100.0f ) * 45.0f;
+    leanInput   = average(mRudderFilter) * ( mLeanResponse / 100.0f ) * 0.75f;
 
     // Turn
     mTurnFilter.insert(mTurnFilter.begin(), currentTurn);
     if( mTurnFilter.size() > 30 )
         mTurnFilter.pop_back();
-    turnAcc = average(mTurnFilter) * ( mTurnResponse / 25.0f );
+    turnInput = average(mTurnFilter) * ( mTurnResponse / 25.0f );
 
     // Ground speed
     mGroundSpeedFilter.insert(mGroundSpeedFilter.begin(), currentGroundSpeed);
@@ -77,12 +84,22 @@ void TaxiLookAheadCameraCommand::execute(CameraPosition &position)
     groundSpeedAcc = average(mGroundSpeedFilter);
 
     // Blend the effect out based on the ground speed (max of 20m/sec)
-    acc = ( turnAcc + rudderAcc ) * 0.5f * ( 1.0f - std::max( 0.0f, std::min( groundSpeedAcc / mMaxTaxiSpeed, 1.0f ) ) );
+    blend = ( 1.0f - std::max( 0.0f, std::min( groundSpeedAcc / 20.0f, 1.0f ) ) );
+    
+    // Mix the turn & rudder effects
+    acc  = ( turnInput + rudderInput ) * 0.5f * blend;
+    
+    // Lean forwards (and to some degree upwards/off the seat)
+    lean = ( leanInput * leanInput ) * blend;
 
-    // Cache yaw & roll
+    // Cache y, z, yaw & roll
+    mLastY         = lean * 0.25f;
+    mLastZ         = -lean;
     mLastYaw       = acc;
     mLastRoll      = acc * 0.125f;
 
+    position.y    += mLastY;
+    position.z    += mLastZ;
     position.yaw  += mLastYaw;
     position.roll += mLastRoll;
 }
@@ -112,12 +129,12 @@ float TaxiLookAheadCameraCommand::get_turn_response() const
     return mTurnResponse;
 }
 
-void TaxiLookAheadCameraCommand::set_max_taxi_speed(float speed)
+void TaxiLookAheadCameraCommand::set_lean_response(float response)
 {
-    mMaxTaxiSpeed = speed;
+    mLeanResponse = response;
 }
 
-float TaxiLookAheadCameraCommand::get_max_taxi_speed() const
+float TaxiLookAheadCameraCommand::get_lean_response() const
 {
-    return mMaxTaxiSpeed;
+    return mLeanResponse;
 }

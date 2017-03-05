@@ -90,7 +90,7 @@ void SettingsWriter::visit(TaxiLookAheadCameraCommand &command)
         fprintf(mFile, "cameracommand.taxilookahead.enabled=%s\n", command.is_enabled() ? "1" : "0");
         fprintf(mFile, "cameracommand.taxilookahead.rudder.response=%.0f\n", command.get_rudder_response());
         fprintf(mFile, "cameracommand.taxilookahead.turn.response=%.0f\n", command.get_turn_response());
-        fprintf(mFile, "cameracommand.taxilookahead.speed.max=%.0f\n", command.get_max_taxi_speed());
+        fprintf(mFile, "cameracommand.taxilookahead.lean.response=%.0f\n", command.get_lean_response());
     }
 }
 
