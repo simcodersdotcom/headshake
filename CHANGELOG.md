@@ -1,3 +1,7 @@
+Stable release: v1.6
+--------------------
+- Taxi Lookahead
+
 Stable release: v1.5
 --------------------
 - Bug Fixes
