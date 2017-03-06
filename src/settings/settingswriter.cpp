@@ -8,6 +8,7 @@
 #include "cameracommands/lookaheadcameracommand.h"
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
+#include "cameracommands/taxilookaheadcameracommand.h"
 #include "cameracommands/guncameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
@@ -80,6 +81,16 @@ void SettingsWriter::visit(GroundRollCameraCommand &command)
     if (mFile != NULL) {
         fprintf(mFile, "cameracommand.groundroll.enabled=%s\n", command.is_enabled() ? "1" : "0");
         fprintf(mFile, "cameracommand.groundroll.response=%.0f\n", command.get_response());
+    }
+}
+
+void SettingsWriter::visit(TaxiLookAheadCameraCommand &command)
+{
+    if (mFile != NULL) {
+        fprintf(mFile, "cameracommand.taxilookahead.enabled=%s\n", command.is_enabled() ? "1" : "0");
+        fprintf(mFile, "cameracommand.taxilookahead.rudder.response=%.0f\n", command.get_rudder_response());
+        fprintf(mFile, "cameracommand.taxilookahead.turn.response=%.0f\n", command.get_turn_response());
+        fprintf(mFile, "cameracommand.taxilookahead.lean.response=%.0f\n", command.get_lean_response());
     }
 }
 

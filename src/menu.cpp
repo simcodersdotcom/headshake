@@ -1,4 +1,6 @@
+#if !defined(XPLM210)
 #define XPLM210
+#endif
 
 #include <stddef.h>  // defines NULL
 #include <CHeaders/XPLM/XPLMMenus.h>
@@ -16,6 +18,7 @@
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
+#include "cameracommands/taxilookaheadcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
 
 // Custom messages
@@ -24,9 +27,10 @@
 #define UPDATE_GFORCE_ACCELERATION 3
 #define UPDATE_GFORCE_LOOKAHEAD    4
 #define UPDATE_GROUNDROLL          5
-#define UPDATE_PISTONENGINE        6
-#define UPDATE_ROTOR               7
-#define UPDATE_TOUCHDOWN           8
+#define UPDATE_TAXI_LOOKAHEAD      6
+#define UPDATE_PISTONENGINE        7
+#define UPDATE_ROTOR               8
+#define UPDATE_TOUCHDOWN           9
 
 /**
 |-------------------------------
@@ -299,7 +303,7 @@ void Menu::visit(LookAheadCameraCommand &command)
     int x1, x2, y = mTop - 180 - 10;
 
     mLookAheadCameraCommand = &command;
-    subw = XPCreateWidget(mLeft + 10, y, mRight - 10, y - 70, 1, "LookAhead Effect Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+    subw = XPCreateWidget(mLeft + 10, y, mRight - ( mWidth / 2 ) - 10, y - 70, 1, "LookAhead Effect Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
     x1 = mLeft + 20;
@@ -323,7 +327,7 @@ void Menu::visit(LookAheadCameraCommand &command)
     // Add the sensitivity label + scrollbar
     y = y - 20;
     sprintf(buffer, "Lookahead maximum angle: %.0f degrees", mLookAheadCameraCommand->get_response());
-    lookaheadLabel = XPCreateWidget(x1 - 5, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+    lookaheadLabel = XPCreateWidget(x1 - 5, y, x2 - ( mWidth / 2 ), y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
     // On message received update the label
     XPAddWidgetCallback(lookaheadLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
         if (inMessage == xpMsg_UserStart + UPDATE_GFORCE_LOOKAHEAD) {
@@ -335,7 +339,7 @@ void Menu::visit(LookAheadCameraCommand &command)
         return 0;
     });
     y = y - 20;
-    lookaheadScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+    lookaheadScrollbar = XPCreateWidget(x1 + 5, y, x2 - ( mWidth / 2 ) - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
     XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarMin, 1);
     XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarMax, 90);
     XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
@@ -364,7 +368,7 @@ void Menu::visit(GroundRollCameraCommand &command)
     char buffer[16];
 
     mGroundRollCameraCommand = &command;
-    subw = XPCreateWidget(mLeft + 10, y, mRight - 10, y - 70, 1, "Ground Roll Shaking Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+    subw = XPCreateWidget( mLeft + 10, y, mRight - ( mWidth / 2 ) - 10, y - 70, 1, "Ground Roll Shaking Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
     x1 = mLeft + 20;
@@ -388,7 +392,7 @@ void Menu::visit(GroundRollCameraCommand &command)
     // Add the response label + scrollbar
     y = y - 20;
     sprintf(buffer, "Response: %.0f", mGroundRollCameraCommand->get_response());
-    responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+    responseLabel = XPCreateWidget(x1, y, x2 - ( mWidth / 2 ), y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
     // On message received update the label
     XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
         if (inMessage == xpMsg_UserStart + UPDATE_GROUNDROLL) {
@@ -400,7 +404,7 @@ void Menu::visit(GroundRollCameraCommand &command)
         return 0;
     });
     y = y - 20;
-    responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+    responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - ( mWidth / 2 ) - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
     XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
     XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
     XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
@@ -410,6 +414,130 @@ void Menu::visit(GroundRollCameraCommand &command)
         if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
             Menu::mInstance->mGroundRollCameraCommand->set_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
             XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_GROUNDROLL, xpMode_Recursive, 0, 0);
+            return 1;
+        }
+        return 0;
+    });
+}
+
+void Menu::visit(TaxiLookAheadCameraCommand &command)
+{
+    XPWidgetID subw;
+    int x1, x2;
+    // Set the subwindow top like main top minus the gforce height
+    int y = mTop - 180 - 10;
+    XPWidgetID enableButton;
+    XPWidgetID responseScrollbar;
+    XPWidgetID responseLabel;
+    char buffer[32];
+
+    mTaxiLookAheadCameraCommand = &command;
+    subw = XPCreateWidget(mLeft + ( mWidth / 2 ) + 10, y, mRight - 10, y - 70 - 10 - 70, 1, "Taxi LookAhead Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+    XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
+
+    x1 = mLeft + ( mWidth / 2 ) + 20;
+    x2 = mRight - 20;
+
+    // Add the enable checkbox
+    y = y - 10;
+    enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the taxi lookahead", 0, mWidgetId, xpWidgetClass_Button);
+    XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
+    XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+    XPSetWidgetProperty(enableButton, xpProperty_ButtonState, command.is_enabled());
+    XPAddWidgetCallback(enableButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        int inExit;
+        if (inMessage == xpMsg_ButtonStateChanged) {
+            Menu::mInstance->mTaxiLookAheadCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+            return 1;
+        }
+        return 0;
+    });
+
+    // Add the rudder response label + scrollbar
+    y = y - 20;
+    sprintf(buffer, "Rudder response: %.0f", mTaxiLookAheadCameraCommand->get_rudder_response());
+    responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+    // On message received update the label
+    XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        if (inMessage == xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD) {
+            char mbuffer[32];
+            sprintf(mbuffer, "Rudder response: %.0f", Menu::mInstance->mTaxiLookAheadCameraCommand->get_rudder_response());
+            XPSetWidgetDescriptor(inWidget, mbuffer);
+            return 1;
+        }
+        return 0;
+    });
+    y = y - 20;
+    responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_rudder_response());
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
+    XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        int inExit;
+        if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
+            Menu::mInstance->mTaxiLookAheadCameraCommand->set_rudder_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+            XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD, xpMode_Recursive, 0, 0);
+            return 1;
+        }
+        return 0;
+    });
+
+    // Add the turn response label + scrollbar
+    y = y - 20;
+    sprintf(buffer, "Turn response: %.0f", mTaxiLookAheadCameraCommand->get_turn_response());
+    responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+    // On message received update the label
+    XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        if (inMessage == xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD) {
+            char mbuffer[32];
+            sprintf(mbuffer, "Turn response: %.0f", Menu::mInstance->mTaxiLookAheadCameraCommand->get_turn_response());
+            XPSetWidgetDescriptor(inWidget, mbuffer);
+            return 1;
+        }
+        return 0;
+    });
+    y = y - 20;
+    responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_turn_response());
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
+    XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        int inExit;
+        if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
+            Menu::mInstance->mTaxiLookAheadCameraCommand->set_turn_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+            XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD, xpMode_Recursive, 0, 0);
+            return 1;
+        }
+        return 0;
+    });
+
+    // Add the lean response label + scrollbar
+    y = y - 20;
+    sprintf(buffer, "Lean Response: %.0f", mTaxiLookAheadCameraCommand->get_lean_response());
+    responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+    // On message received update the label
+    XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        if (inMessage == xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD) {
+            char mbuffer[32];
+            sprintf(mbuffer, "Lean Response: %.0f", Menu::mInstance->mTaxiLookAheadCameraCommand->get_lean_response());
+            XPSetWidgetDescriptor(inWidget, mbuffer);
+            return 1;
+        }
+        return 0;
+    });
+    y = y - 20;
+    responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_lean_response());
+    XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
+    XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        int inExit;
+        if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
+            Menu::mInstance->mTaxiLookAheadCameraCommand->set_lean_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+            XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD, xpMode_Recursive, 0, 0);
             return 1;
         }
         return 0;

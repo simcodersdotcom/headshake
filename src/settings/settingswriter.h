@@ -21,6 +21,7 @@ class SettingsWriter : public IVisitor
         void visit(RotorCameraCommand&);
         void visit(GunCameraCommand&);
         void visit(GroundRollCameraCommand&);
+        void visit(TaxiLookAheadCameraCommand&);
         void visit(TouchdownCameraCommand&);
     protected:
     private:

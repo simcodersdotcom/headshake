@@ -24,6 +24,7 @@ class Menu : public IVisitor
         void visit(RotorCameraCommand&);
         void visit(GunCameraCommand&);
         void visit(GroundRollCameraCommand&);
+        void visit(TaxiLookAheadCameraCommand&);
         void visit(TouchdownCameraCommand&);
     protected:
     private:
@@ -54,6 +55,7 @@ class Menu : public IVisitor
         PistonEngineCameraCommand* mPistonEngineCameraCommand;
         RotorCameraCommand* mRotorCameraCommand;
         GroundRollCameraCommand* mGroundRollCameraCommand;
+        TaxiLookAheadCameraCommand* mTaxiLookAheadCameraCommand;
         TouchdownCameraCommand* mTouchdownCameraCommand;
 };
 
