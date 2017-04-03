@@ -113,14 +113,26 @@ CameraControl::CameraControl()
     mStopCommands.push_back(XPLMFindCommand("sim/general/rot_right_slow"));
     mStopCommands.push_back(XPLMFindCommand("sim/general/rot_up_slow"));
     mStopCommands.push_back(XPLMFindCommand("sim/general/rot_down_slow"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_up"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_up_right"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_right"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_down_right"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_down"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_down_left"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_left"));
+    mStopCommands.push_back(XPLMFindCommand("sim/general/hat_switch_up_left"));
+
     mStopCommandsSize = mStopCommands.size();
 }
 
 CameraControl::~CameraControl()
 {
     // Delete the commands and free the memory
-    for (unsigned int i = 0; i < mCommandsSize; i++)
-        delete mCommands.at(i);
+    for (unsigned int i = 0; i < mCommandsSize; i++) {
+        if (mCommands.at(i) != NULL) {
+            delete mCommands.at(i);
+        }
+    }
     mCommands.clear();
     // Delete the stopcommands and free the memory
     mStopCommands.clear();
