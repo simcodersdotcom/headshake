@@ -88,8 +88,13 @@ void GForceCameraCommand::execute(CameraPosition &position)
 
     // Roll
     // (works like the heading but with a different response)
-    mLastRoll -= (acc * mYawResponse / 5);
-    position.roll += mLastRoll;
+    if (acc < 0.005 || acc > 0.005) {
+        mLastRoll -= (acc * mYawResponse / 5);
+        position.roll += mLastRoll;
+    } else {
+        mLastRoll = 0;
+        position.roll = 0;
+    }
 
     // X
     // (works like the heading but with a different response)
