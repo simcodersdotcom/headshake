@@ -24,7 +24,7 @@ PLUGIN_API int XPluginStart(
     char *		outDesc)
 {
     // Define the plugin properties
-    strcpy(outName, "SimCoders - HeadShake 1.7");
+    strcpy(outName, "SimCoders - HeadShake 1.8");
     strcpy(outSig, "com.simcoders.headshake");
     strcpy(outDesc, "A plugin that moves the view in the virtual cockpit basing on the g force values.");
     // Setup the features
