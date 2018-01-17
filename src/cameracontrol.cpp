@@ -81,6 +81,16 @@ CameraControl::CameraControl()
     mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_7"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_8"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_9"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_10"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_11"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_12"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_13"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_14"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_15"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_16"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_17"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_18"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_19"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/3d_cockpit_cmnd_look"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/3d_cockpit_toggle"));
     mStopCommands.push_back(XPLMFindCommand("sim/general/left"));
