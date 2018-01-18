@@ -1,3 +1,12 @@
+Stable release: v1.8
+--------------------
+- Compatibility with X-Plane 11 new quick looks
+- Minor fixes
+
+Stable release: v1.7
+--------------------
+- Minor fixes
+
 Stable release: v1.6
 --------------------
 - Taxi Lookahead
