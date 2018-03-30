@@ -5,7 +5,6 @@ project (HeadShake)
 # Options
 option(CMP_LIN "CMP_LIN" OFF)
 option(CMP_WIN_64 "CMP_WIN_64" OFF)
-option(CMP_WIN_32 "CMP_WIN_32" OFF)
 option(CMP_MAC "CMP_MAC" OFF)
 
 # Set the libraries path: edit this line to specify your custom library path
@@ -52,30 +51,6 @@ if(CMP_LIN)
 	set_target_properties(LIN_DEBUG_64 PROPERTIES PREFIX "")
 	set_target_properties(LIN_DEBUG_64 PROPERTIES OUTPUT_NAME "lin.xpl")
 	set_target_properties(LIN_DEBUG_64 PROPERTIES SUFFIX "")
-
-	# ------------------
-	# Release - Linux 32
-	# ------------------
-	add_library(LIN_RELEASE_32 SHARED ${SOURCES})
-
-	target_compile_options(LIN_RELEASE_32 PRIVATE ${GCC_DEFAULT_FLAGS} -m32 -fPIC -DLIN)
-	set_target_properties(LIN_RELEASE_32 PROPERTIES LINK_FLAGS "-m32 -Wl,--version-script=collisions")
-	set_target_properties(LIN_RELEASE_32 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Release/HeadShake/32/")
-	set_target_properties(LIN_RELEASE_32 PROPERTIES PREFIX "")
-	set_target_properties(LIN_RELEASE_32 PROPERTIES OUTPUT_NAME "lin.xpl")
-	set_target_properties(LIN_RELEASE_32 PROPERTIES SUFFIX "")
-
-	# ------------------
-	# Debug - Linux 32
-	# ------------------
-	add_library(LIN_DEBUG_32 SHARED ${SOURCES})
-
-	target_compile_options(LIN_DEBUG_32 PRIVATE ${GCC_DEFAULT_FLAGS} -m32 -fPIC -g -DLIN)
-	set_target_properties(LIN_DEBUG_32 PROPERTIES LINK_FLAGS "-m32 -Wl,--version-script=collisions")
-	set_target_properties(LIN_DEBUG_32 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Debug/HeadShake/32/")
-	set_target_properties(LIN_DEBUG_32 PROPERTIES PREFIX "")
-	set_target_properties(LIN_DEBUG_32 PROPERTIES OUTPUT_NAME "lin.xpl")
-	set_target_properties(LIN_DEBUG_32 PROPERTIES SUFFIX "")
 endif(CMP_LIN)
 
 if(CMP_WIN_64)
@@ -99,27 +74,6 @@ if(CMP_WIN_64)
 	set_target_properties(WIN_RELEASE_64 PROPERTIES SUFFIX "")
 endif(CMP_WIN_64)
 
-if (CMP_WIN_32)
-	cmake_policy(SET CMP0015 NEW)
-	set (CMAKE_SYSTEM_NAME Windows)
-	set (CMAKE_CXX_COMPILER i686-w64-mingw32-g++)
-	link_directories("${SDK_PATH}/Libraries/Win")
-
-	# --------------------
-	# Release - Windows 32
-	# --------------------
-	add_library(WIN_RELEASE_32 SHARED ${SOURCES})
-
-	find_package(Threads REQUIRED)
-	target_compile_options(WIN_RELEASE_32 PRIVATE ${GCC_DEFAULT_FLAGS} -c -fno-stack-protector -static-libgcc -static-libstdc++ -DXPLM200 -DIBM)
-	target_link_libraries(WIN_RELEASE_32 XPLM XPWidgets -static-libgcc -static-libstdc++ -static ${CMAKE_THREAD_LIBS_INIT})
-	set_target_properties(WIN_RELEASE_32 PROPERTIES LINK_FLAGS "-Wl,--version-script=collisions")
-	set_target_properties(WIN_RELEASE_32 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Release/HeadShake/32/")
-	set_target_properties(WIN_RELEASE_32 PROPERTIES PREFIX "")
-	set_target_properties(WIN_RELEASE_32 PROPERTIES OUTPUT_NAME "win.xpl")
-	set_target_properties(WIN_RELEASE_32 PROPERTIES SUFFIX "")
-endif(CMP_WIN_32)
-
 if (CMP_MAC)
 	cmake_policy(SET CMP0042 NEW)
 	set (CMAKE_SYSTEM_NAME Darwin)
@@ -137,17 +91,4 @@ if (CMP_MAC)
 	set_target_properties(MAC_RELEASE_64 PROPERTIES PREFIX "")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES OUTPUT_NAME "mac.xpl")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES SUFFIX "")
-
-	# --------------------
-	# Release - Mac 32
-	# --------------------
-	add_library(MAC_RELEASE_32 SHARED ${SOURCES})
-
-	target_compile_options(MAC_RELEASE_32 PRIVATE ${GCC_DEFAULT_FLAGS} -arch i386 -DXPLM200 -DAPL)
-	target_link_libraries(MAC_RELEASE_32 "-F${SDK_PATH}/Libraries/Mac" "-framework XPLM" "-framework XPWidgets")
-	set_target_properties(MAC_RELEASE_32 PROPERTIES LINK_FLAGS "-m32 -static-libgcc -static-libstdc++")
-	set_target_properties(MAC_RELEASE_32 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Release/HeadShake/32/")
-	set_target_properties(MAC_RELEASE_32 PROPERTIES PREFIX "")
-	set_target_properties(MAC_RELEASE_32 PROPERTIES OUTPUT_NAME "mac.xpl")
-	set_target_properties(MAC_RELEASE_32 PROPERTIES SUFFIX "")
 endif (CMP_MAC)
