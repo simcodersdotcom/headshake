@@ -1,3 +1,8 @@
+Stable release: v1.9
+--------------------
+- Compatibility with X-Plane 11 glance views
+- Removed the 32 build
+
 Stable release: v1.8
 --------------------
 - Compatibility with X-Plane 11 new quick looks
