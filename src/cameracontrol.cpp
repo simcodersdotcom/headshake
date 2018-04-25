@@ -99,6 +99,7 @@ CameraControl::CameraControl()
     mStopCommands.push_back(XPLMFindCommand("sim/view/right_45"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/left_90"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/right_90"));
+    mStopCommands.push_back(XPLMFindCommand("sim/view/default_view"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/back"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/glance_left"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/glance_right"));
