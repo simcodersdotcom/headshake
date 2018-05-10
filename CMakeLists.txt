@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 2.8)
 
+set(CMAKE_C_COMPILER "gcc")
+set(CMAKE_CXX_COMPILER "g++")
+
 project (HeadShake)
 
 # Options
@@ -84,9 +87,9 @@ if (CMP_MAC)
 	# --------------------
 	add_library(MAC_RELEASE_64 SHARED ${SOURCES})
 
-	target_compile_options(MAC_RELEASE_64 PRIVATE ${GCC_DEFAULT_FLAGS} -arch x86_64 -DXPLM200 -DAPL)
-	target_link_libraries(MAC_RELEASE_64 "-F${SDK_PATH}/Libraries/Mac" "-framework XPLM" "-framework XPWidgets")
-	set_target_properties(MAC_RELEASE_64 PROPERTIES LINK_FLAGS "-m64 -fvisibility=hidden -static-libgcc -static-libstdc++")
+	target_compile_options(MAC_RELEASE_64 PRIVATE ${GCC_DEFAULT_FLAGS} -arch x86_64 -nostdinc++ -I/Library/Developer/CommandLineTools/usr/include/c++/v1 -DXPLM200 -DAPL)
+	target_link_libraries(MAC_RELEASE_64 "-F${SDK_PATH}/Libraries/Mac" "-framework XPLM" "-framework XPWidgets" "-nodefaultlibs" "-lc++" "-lc++abi" "-lm" "-lc" "-lgcc_s" "-lgcc")
+	set_target_properties(MAC_RELEASE_64 PROPERTIES LINK_FLAGS "-m64 -fvisibility=hidden")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Release/HeadShake/64/")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES PREFIX "")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES OUTPUT_NAME "mac.xpl")
