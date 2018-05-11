@@ -53,14 +53,37 @@ void Menu::create_menu_entry(CameraControl &control)
     mId = XPLMAppendMenuItem(XPLMFindPluginsMenu(), "SimCoders - HeadShake", 0, 1);
     XPLMMenuID subMenuId = XPLMCreateMenu("Settings", XPLMFindPluginsMenu(), mId, [](void*, void*) -> void {
         // When clicked, start visiting the control and the commands and draw the widgets
-        Menu::mInstance->mCameraControl->accept(*Menu::mInstance);
+        Menu::mInstance->show();
     },  0);
     XPLMAppendMenuItem(subMenuId, "Settings", (void*)1, 1);
+
+    mToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_menu", "Open/Close the settings menu");
+    XPLMRegisterCommandHandler(mToggleCommand, Menu::toggle, true, 0);
 }
 
 void Menu::destroy_menu_entry()
 {
     XPLMRemoveMenuItem(XPLMFindPluginsMenu(), mId);
+    XPLMUnregisterCommandHandler(mToggleCommand, Menu::toggle, true, 0);
+}
+
+// Static: used to toggle the menu
+int Menu::toggle(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+    if (inPhase == xplm_CommandBegin) {
+        if (Menu::mInstance->mWidgetId == nullptr) {
+            Menu::mInstance->show();
+        } else {
+            XPDestroyWidget(Menu::mInstance->mWidgetId, 1);
+            Menu::mInstance->mWidgetId = nullptr;
+        }
+    }
+    return 1;
+}
+
+void Menu::show()
+{
+    mCameraControl->accept(*mInstance);
 }
 
 /**
@@ -75,6 +98,7 @@ Menu::Menu()
     // The other values are calculated at run time
     mWidth = 700;
     mAdsHeight = 100;
+    mWidgetId = nullptr;
 }
 
 Menu::~Menu()
@@ -88,7 +112,7 @@ void Menu::visit(CameraControl &control)
     int w, h, x1, x2;
     XPWidgetID subw;
     XPLMGetScreenSize(&w, &h);
-    mHeight = (control.error() ? 710 : 660) + mAdsHeight;
+    mHeight = (control.error() ? 560 : 510) + mAdsHeight;
     mLeft = (w - mWidth) / 2;
     mTop = (h + mHeight) / 2;
     mRight = mLeft + mWidth;
@@ -103,6 +127,7 @@ void Menu::visit(CameraControl &control)
         // When the close buttons are clicked, close the window
         if (inMessage == xpMessage_CloseButtonPushed) {
             XPDestroyWidget(inWidget, 1);
+            Menu::mInstance->mWidgetId = nullptr;
             return 1;
         }
         return 0;
@@ -124,7 +149,7 @@ void Menu::visit(CameraControl &control)
     if (mShowAds) {
         XPCreateWidget(x1 - 5, y, x2, y - 90, 1, "HeadShake can work in pair with the Reality Expansion Pack, our hyper-realistic addon for X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
         XPCreateWidget(x1 - 5, y, x2, y - 120, 1, "It adds a damages and maintenance system, real world procedures, relistic flight dynamics and much more to X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
-        XPCreateWidget(x1 - 5, y, x2, y - 150, 1, "You can get more informations at http://www.simcoders.com", 0, mWidgetId, xpWidgetClass_Caption);
+        XPCreateWidget(x1 - 5, y, x2, y - 150, 1, "You can get more informations at https://www.simcoders.com", 0, mWidgetId, xpWidgetClass_Caption);
     } else {
         XPCreateWidget(x1 - 5, y, x2, y - 85, 1, "HeadShake is correctly working in pair with the Reality Expansion Pack.", 0, mWidgetId, xpWidgetClass_Caption);
         XPCreateWidget(x1 - 5, y, x2, y - 130, 1, "Thank you for being a REP licence holder. We are a small company and your help is very much appreciated.", 0, mWidgetId, xpWidgetClass_Caption);
@@ -134,20 +159,51 @@ void Menu::visit(CameraControl &control)
     // Move all the widgets down to make space for the ads
     mTop -= mAdsHeight;
 
-    // Create the compatibility menu
+    // Create the general "Enable/Disable" menu
+    y = mTop - 30;
+    x1 = mLeft + 10;
+    x2 = x1 + mWidth / 2 - 20;
+    subw = XPCreateWidget(x1, y, x2, y - 150, 1, "General", 0, mWidgetId, xpWidgetClass_SubWindow);
+    XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
+    x1 += 10;
+    x2 -= 10;
+    y -= 10;
+    // Add the compatibility checkbox
+    compatibilityButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable HeadShake", 0, mWidgetId, xpWidgetClass_Button);
+    XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonType, xpRadioButton);
+    XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+    XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonState, control.get_enabled());
+    XPAddWidgetCallback(compatibilityButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+        int inExit;
+        if (inMessage == xpMsg_ButtonStateChanged) {
+            Menu::mInstance->mCameraControl->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+            return 1;
+        }
+        return 0;
+    });
+    y -= 10;
+    // Add the description
+    XPCreateWidget(x1, y, x1 + 10, y - 30, 1, "This is the general toggle for HeadShake.", 0, mWidgetId, xpWidgetClass_Caption);
+    XPCreateWidget(x1, y, x1 + 10, y - 60, 1, "Enable it if you want to use this plugin.", 0, mWidgetId, xpWidgetClass_Caption);
+    XPCreateWidget(x1, y, x1 + 10, y - 120, 1, "The following commands are also available:", 0, mWidgetId, xpWidgetClass_Caption);
+    XPCreateWidget(x1, y, x1 + 10, y - 150, 1, " - simcoders/headshake/toggle_headshake", 0, mWidgetId, xpWidgetClass_Caption);
+    XPCreateWidget(x1, y, x1 + 10, y - 180, 1, " - simcoders/headshake/toggle_menu", 0, mWidgetId, xpWidgetClass_Caption);
+
+    // Create the multimonitor compatibility menu
     // Place it at the bottom
     // Set the subwindow top like main top minus the gforce height,
     // the engine vibrations height, the ground roll height, the touchdown height, the piston engine height, the roto height
     // and some padding
-    y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
-    x1 = mLeft + 20;
-    x2 = mRight - 20;
-    subw = XPCreateWidget(mLeft + 10, y, mRight - 10, y - 60, 1, "Compatibility", 0, mWidgetId, xpWidgetClass_SubWindow);
+    y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
+    x1 = mLeft + mWidth / 2 + 10;
+    x2 = x1 + mWidth / 2 - 20;
+    subw = XPCreateWidget(x1, y, x2, y - 70, 1, "Compatibility", 0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
-    // Add the description
-    XPCreateWidget(x1 - 5, y, x2, y - 30, 1, "Multimonitor Compatibility: enable this option only if you experience some issues with your multimonitor setup.", 0, mWidgetId, xpWidgetClass_Caption);
+    x1 += 10;
+    x2 -= 10;
+    y -= 10;
     // Add the compatibility checkbox
-    compatibilityButton = XPCreateWidget(x1, y - 25, x1 + 10, y - 55, 1, " Enable compatibility", 0, mWidgetId, xpWidgetClass_Button);
+    compatibilityButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable multimonitor compatibility", 0, mWidgetId, xpWidgetClass_Button);
     XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonType, xpRadioButton);
     XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
     XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonState, control.get_multimonitor_compatibility());
@@ -159,6 +215,9 @@ void Menu::visit(CameraControl &control)
         }
         return 0;
     });
+    y -= 10;
+    // Add the description
+    XPCreateWidget(x1, y, x1 + 10, y - 30, 1, "Enable this if you use more screens.", 0, mWidgetId, xpWidgetClass_Caption);
 }
 
 // Create and handle the gforce subwindow
@@ -176,11 +235,15 @@ void Menu::visit(GForceCameraCommand &command)
     char buffer[64];
 
     mGforceCameraCommand = &command;
-    subw = XPCreateWidget(mLeft + 10, mTop - 30, mRight - 10, mTop - 180, 1, "GForce Effect Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+
+    x1 = mLeft + mWidth / 2 + 10;
+    x2 = x1 + mWidth / 2 - 20;
+
+    subw = XPCreateWidget(x1, mTop - 30, x2, mTop - 180, 1, "GForce Effect Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
-    x1 = mLeft + 20;
-    x2 = mRight - 20;
+    x1 += 10;
+    x2 -= 10;
 
     // Add the enable checkbox
     y = mTop - 40;
@@ -556,11 +619,11 @@ void Menu::visit(TouchdownCameraCommand &command)
     char buffer[16];
 
     mTouchdownCameraCommand = &command;
-    subw = XPCreateWidget(mLeft + 10, y, mRight - 10, y - 70, 1, "Touchdown effect Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+    subw = XPCreateWidget(mLeft + 10, y, mLeft + mWidth / 2 - 10, y - 70, 1, "Touchdown effect Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
     x1 = mLeft + 20;
-    x2 = mRight - 20;
+    x2 = mLeft + mWidth / 2 - 20;
 
     // Add the enable checkbox
     y = y - 10;
@@ -614,18 +677,22 @@ void Menu::visit(PistonEngineCameraCommand &command)
     XPWidgetID subw;
     int x1, x2;
     // Set the subwindow top like main top minus the gforce height minus some padding and the ground roll height minus the touchdown height
-    int y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
+    int y = mTop - 180 - 10 - 70 - 10 - 70 - 10;
     XPWidgetID enableButton;
     XPWidgetID responseScrollbar;
     XPWidgetID responseLabel;
     char buffer[16];
 
     mPistonEngineCameraCommand = &command;
-    subw = XPCreateWidget(mLeft + 10, y, mRight - 10, y - 70, 1, "Piston Engine Vibrations Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+
+    x1 = mLeft + mWidth / 2 + 10;
+    x2 = x1 + mWidth / 2 - 20;
+
+    subw = XPCreateWidget(x1, y, x2, y - 70, 1, "Piston Engine Vibrations Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
-    x1 = mLeft + 20;
-    x2 = mRight - 20;
+    x1 += 10;
+    x2 -= 10;
 
     // Add the enable checkbox
     y = y - 10;
@@ -679,18 +746,18 @@ void Menu::visit(RotorCameraCommand &command)
     int x1, x2;
     // Set the subwindow top like main top minus the gforce height,
     // the engine vibrations height, the ground roll height, the touchdown height, the piston engine height and some padding
-    int y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
+    int y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
     XPWidgetID enableButton;
     XPWidgetID responseScrollbar;
     XPWidgetID responseLabel;
     char buffer[16];
 
     mRotorCameraCommand = &command;
-    subw = XPCreateWidget(mLeft + 10, y, mRight - 10, y - 70, 1, "Rotor Vibrations Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
+    subw = XPCreateWidget(mLeft + 10, y, mLeft + mWidth / 2 - 10, y - 70, 1, "Rotor Vibrations Settings",  0, mWidgetId, xpWidgetClass_SubWindow);
     XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
     x1 = mLeft + 20;
-    x2 = mRight - 20;
+    x2 = mLeft + mWidth / 2 - 20;
 
     // Add the enable checkbox
     y = y - 10;

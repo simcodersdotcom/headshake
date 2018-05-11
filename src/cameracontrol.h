@@ -19,18 +19,24 @@ public:
     void accept(IVisitor&);
     void on_enable();
     void on_disable();
-    bool get_multimonitor_compatibility();
+    bool get_multimonitor_compatibility() const;
     void set_multimonitor_compatibility(bool);
     bool error();
     CameraPosition get_offset();
-    bool get_override();
+    bool get_override() const;
     void set_override(bool);
+    void set_enabled(bool);
+    bool get_enabled() const;
 protected:
 private:
     /** Singleton */
     CameraControl();  // Private so that it can  not be called
     CameraControl(CameraControl const&){};             // copy constructor is private
     CameraControl& operator=(CameraControl const&){ return *mInstance; };  // assignment operator is private
+
+    static int freeze(XPLMCommandRef, XPLMCommandPhase, void*);
+    static int toggle_hs(XPLMCommandRef, XPLMCommandPhase, void*);
+
     static CameraControl* mInstance;
     virtual ~CameraControl();
     /** Implementation */
@@ -44,6 +50,7 @@ private:
     bool mPositionInited;
     bool mFreezed1;
     bool mFreezed2;
+    bool mEnabled;
     bool mError;
     bool mMultimonitorCompatibility;
     bool mOverride;
@@ -70,6 +77,7 @@ private:
     XPLMDataRef mJoyAxisValues;
     XPLMDataRef mJoyAxisAssignments;
     /** Commands */
+    XPLMCommandRef mEnabledCommand;
     std::vector<XPLMCommandRef> mStopCommands;
     std::vector<XPLMDataRef> mDrefs;
     unsigned int mStopCommandsSize;

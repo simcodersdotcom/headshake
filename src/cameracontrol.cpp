@@ -53,10 +53,12 @@ CameraControl::CameraControl()
     mMultimonitorCompatibility = false;
     mPositionInited = false;
     mOverride = false;
+    mEnabled = true;
     mLastCameraType = 0;
     mLastJoyPitch = 0;
     mLastJoyYaw = 0;
     mCameraOffset.x = mCameraOffset.y = mCameraOffset.z = mCameraOffset.roll = mCameraOffset.pitch = mCameraOffset.yaw = 0;
+    mEnabledCommand = XPLMCreateCommand("simcoders/headshake/toggle_headshake", "Enable/Disable HeadShake");
     // Fill the datarefs
     mCinemaVeriteDataRef = XPLMFindDataRef("sim/graphics/view/cinema_verite");
     mPausedDataRef = XPLMFindDataRef("sim/time/paused");
@@ -162,6 +164,32 @@ CameraControl::~CameraControl()
     mStopCommands.clear();
 }
 
+// Static private: command callback that freezes the system when requested
+int CameraControl::freeze(XPLMCommandRef, XPLMCommandPhase, void*)
+{
+    CameraControl::mInstance->freeze();
+    return 1;
+}
+
+// Static private: command callback that toggle the system when requested
+int CameraControl::toggle_hs(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+    if (inPhase == xplm_CommandBegin) {
+        CameraControl::mInstance->set_enabled(!CameraControl::mInstance->get_enabled());
+    }
+    return 0;
+}
+
+void CameraControl::set_enabled(bool enabled)
+{
+    mEnabled = enabled;
+}
+
+bool CameraControl::get_enabled() const
+{
+    return mEnabled;
+}
+
 void CameraControl::on_enable()
 {
     int datarefEditorId = XPLMFindPluginBySignature("xplanesdk.examples.DataRefEditor");
@@ -239,10 +267,7 @@ void CameraControl::on_enable()
     // Register the commands
     for (unsigned int i = 0; i < mStopCommandsSize; i++) {
         if (mStopCommands.at(i) != NULL) {
-            XPLMRegisterCommandHandler(mStopCommands.at(i), [](XPLMCommandRef, XPLMCommandPhase, void*) -> int {
-                  CameraControl::mInstance->freeze();
-                  return 1;
-            }, true, 0);
+            XPLMRegisterCommandHandler(mStopCommands.at(i), CameraControl::freeze, true, 0);
         }
     }
 
@@ -250,6 +275,9 @@ void CameraControl::on_enable()
     for (unsigned int i = 0; i < mCommandsSize; i++) {
         mCommands.at(i)->on_enable();
     }
+
+    // Register the X-Plane commands
+    XPLMRegisterCommandHandler(mEnabledCommand, CameraControl::toggle_hs, true, 0);
 }
 
 void CameraControl::on_disable()
@@ -271,16 +299,15 @@ void CameraControl::on_disable()
     // Unregister the commands
     for (unsigned int i = 0; i < mStopCommandsSize; i++) {
         if (mStopCommands.at(i) != NULL) {
-            XPLMUnregisterCommandHandler(mStopCommands.at(i), [](XPLMCommandRef, XPLMCommandPhase, void*) -> int {
-                  CameraControl::mInstance->freeze();
-                  return 1;
-            }, true, 0);
+            XPLMUnregisterCommandHandler(mStopCommands.at(i), CameraControl::freeze, true, 0);
         }
     }
     // Send the on_enable to the commands
     for (unsigned int i = 0; i < mCommandsSize; i++) {
         mCommands.at(i)->on_disable();
     }
+    // Unregister the toggle command
+    XPLMUnregisterCommandHandler(mEnabledCommand, CameraControl::toggle_hs, true, 0);
 }
 
 void CameraControl::freeze()
@@ -292,6 +319,10 @@ void CameraControl::freeze()
 // Control the camera calling all the active modules
 float CameraControl::control()
 {
+    if (!mEnabled) {
+        return 1;
+    }
+
     CameraPosition currentPos, calculatedPos;
     int cameraType = XPLMGetDatai(mViewTypeDataRef);
 
@@ -403,7 +434,7 @@ void CameraControl::set_override(bool value)
     mOverride = value;
 }
 
-bool CameraControl::get_override()
+bool CameraControl::get_override() const
 {
     return mOverride;
 }
@@ -420,7 +451,7 @@ bool CameraControl::error()
     return mError;
 }
 
-bool CameraControl::get_multimonitor_compatibility()
+bool CameraControl::get_multimonitor_compatibility() const
 {
     return mMultimonitorCompatibility;
 }

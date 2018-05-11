@@ -47,6 +47,8 @@ void SettingsReader::visit(CameraControl &control)
 {
     if (mMap.find("cameracontrol.multimonitorcompat.enabled") != mMap.end())
         control.set_multimonitor_compatibility(mMap["cameracontrol.multimonitorcompat.enabled"].compare("1") == 0);
+    if (mMap.find("cameracontrol.enabled") != mMap.end())
+        control.set_enabled(mMap["cameracontrol.enabled"].compare("1") == 0);
 }
 
 void SettingsReader::visit(GForceCameraCommand &command)

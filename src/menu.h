@@ -16,6 +16,7 @@ class Menu : public IVisitor
         static Menu* get_instance();
         void create_menu_entry(CameraControl &);
         void destroy_menu_entry();
+        void show();
         // Visitors
         void visit(CameraControl&);
         void visit(GForceCameraCommand&);
@@ -36,11 +37,13 @@ class Menu : public IVisitor
         Menu& operator=(Menu const&){ return *mInstance; };  // assignment operator is private
         static Menu* mInstance;
         virtual ~Menu();
+        static int toggle(XPLMCommandRef, XPLMCommandPhase, void*);
 
         /**
         Vars
         */
         XPWidgetID mWidgetId;
+        XPLMCommandRef mToggleCommand;
         int mId;
         int mWidth;
         int mHeight;

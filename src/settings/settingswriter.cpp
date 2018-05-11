@@ -46,8 +46,10 @@ void SettingsWriter::close()
 
 void SettingsWriter::visit(CameraControl &control)
 {
-    if (mFile != NULL)
+    if (mFile != NULL) {
         fprintf(mFile, "cameracontrol.multimonitorcompat.enabled=%s\n", control.get_multimonitor_compatibility() ? "1" : "0");
+        fprintf(mFile, "cameracontrol.enabled=%s\n", control.get_enabled() ? "1" : "0");
+    }
 }
 
 void SettingsWriter::visit(GForceCameraCommand &command)
