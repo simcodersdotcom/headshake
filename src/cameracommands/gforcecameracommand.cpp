@@ -15,6 +15,8 @@ GForceCameraCommand::GForceCameraCommand()
     mGAxialDataRef = XPLMFindDataRef("sim/flightmodel/forces/g_axil");
     mGSideDataRef = XPLMFindDataRef("sim/flightmodel/forces/g_side");
     mRadioAltDataRef = XPLMFindDataRef("sim/flightmodel/position/y_agl");
+    mOnGroundDataRef = XPLMFindDataRef("sim/flightmodel/failures/onground_any");
+    mBrakesDataRef = XPLMFindDataRef("sim/cockpit2/controls/parking_brake_ratio");
     // Setup the private vars
     mDamper = 5;
     mZResponse = 25;
@@ -25,6 +27,8 @@ GForceCameraCommand::GForceCameraCommand()
     mLastYaw = 0;
     mLastPitch = 0;
     mLastRoll = 0;
+    mLastNormG = 1;
+    mLastAxialG = 0;
 }
 
 GForceCameraCommand::~GForceCameraCommand()
@@ -37,6 +41,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
     const float maxAlt = 20, minAlt = 1; // Meters
     const unsigned int maxDamper = 30, minDamper = 5;
     float acc, currentG, aglAlt;
+    bool filter = XPLMGetDatai(mOnGroundDataRef) == 1 && XPLMGetDataf(mBrakesDataRef) > 0;
 
     // Restore the initial position
     position.z -= mLastZ;
@@ -54,23 +59,31 @@ void GForceCameraCommand::execute(CameraPosition &position)
     mLastRoll = 0;
 
     // Exit if disabled
-    if (!pEnabled)
+    if (!pEnabled) {
         return;
+    }
 
     // Calculate the damper basing on the altitude
     aglAlt = XPLMGetDataf(mRadioAltDataRef);
-    if (aglAlt > maxAlt)
+    
+    if (aglAlt > maxAlt) {
         mDamper = minDamper;
-    else if (aglAlt > minAlt)
+    } else if (aglAlt > minAlt) {
         mDamper = minDamper + (maxDamper - minDamper) * (maxAlt - aglAlt) / (maxAlt - minAlt);
-    else
+    } else {
         mDamper = maxDamper;
+    }
 
     // Push backward/forward (axial)
     currentG = XPLMGetDataf(mGAxialDataRef);
+    if (filter) {
+        currentG = mLastAxialG + (currentG - mLastAxialG) * 0.1;
+    }
+    mLastAxialG = currentG;
     mZFilter.insert(mZFilter.begin(), currentG);
-    if (mZFilter.size() > 10)
+    if (mZFilter.size() > 10) {
         mZFilter.pop_back();
+    }
     acc = continue_log(average(mZFilter));
     mLastZ -= (acc * mZResponse / 500.0f);
     mLastPitch -= (acc * mZResponse / 7.5f);
@@ -103,6 +116,10 @@ void GForceCameraCommand::execute(CameraPosition &position)
 
     // Pitch
     currentG = XPLMGetDataf(mGNormalDataRef);
+    if (filter) {
+        currentG = mLastNormG + (currentG - mLastNormG) * 0.1;
+    }
+    mLastNormG = currentG;
     mPitchFilter.insert(mPitchFilter.begin(), currentG - 1);
     while (mPitchFilter.size() > mDamper)
         mPitchFilter.pop_back();

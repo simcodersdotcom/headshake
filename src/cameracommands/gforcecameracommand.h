@@ -39,10 +39,14 @@ class GForceCameraCommand : public CameraCommand
         float mPitchResponse;
         float mYawResponse;
         float mZResponse;
+        float mLastNormG;
+        float mLastAxialG;
         XPLMDataRef mGNormalDataRef;
         XPLMDataRef mGAxialDataRef;
         XPLMDataRef mGSideDataRef;
         XPLMDataRef mRadioAltDataRef;
+        XPLMDataRef mOnGroundDataRef;
+        XPLMDataRef mBrakesDataRef;
 };
 
 #endif // GFORCECAMERACOMMAND_H

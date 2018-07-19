@@ -28,9 +28,11 @@ class GroundRollCameraCommand : public CameraCommand
         float mResponse;
         float mLastX;
         float mLastRoll;
+        float mLastNormG;
         XPLMDataRef mGNormalDataRef;
         XPLMDataRef mOnGroundDataRef;
         XPLMDataRef mGSideDataRef;
+        XPLMDataRef mBrakesDataRef;
 };
 
 #endif // GROUNDROLLCAMERACOMMAND_H
