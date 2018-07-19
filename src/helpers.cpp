@@ -31,7 +31,6 @@ float continue_log(float x)
 
 /*
 Get the average of the vector.
-The first element is the more weighted.
 */
 float average(const std::vector<float> &v)
 {
