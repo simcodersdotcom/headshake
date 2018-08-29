@@ -33,6 +33,7 @@ class GroundRollCameraCommand : public CameraCommand
         XPLMDataRef mOnGroundDataRef;
         XPLMDataRef mGSideDataRef;
         XPLMDataRef mBrakesDataRef;
+        XPLMDataRef mGSDataRef;
 };
 
 #endif // GROUNDROLLCAMERACOMMAND_H

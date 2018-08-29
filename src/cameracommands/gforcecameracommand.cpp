@@ -17,6 +17,7 @@ GForceCameraCommand::GForceCameraCommand()
     mRadioAltDataRef = XPLMFindDataRef("sim/flightmodel/position/y_agl");
     mOnGroundDataRef = XPLMFindDataRef("sim/flightmodel/failures/onground_any");
     mBrakesDataRef = XPLMFindDataRef("sim/cockpit2/controls/parking_brake_ratio");
+    mGSDataRef = XPLMFindDataRef("sim/flightmodel/position/groundspeed");
     // Setup the private vars
     mDamper = 5;
     mZResponse = 25;
@@ -42,6 +43,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
     const unsigned int maxDamper = 30, minDamper = 5;
     float acc, currentG, aglAlt;
     bool filter = XPLMGetDatai(mOnGroundDataRef) == 1 && XPLMGetDataf(mBrakesDataRef) > 0;
+    float gs = XPLMGetDataf(mGSDataRef);
 
     // Restore the initial position
     position.z -= mLastZ;
@@ -75,7 +77,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
     }
 
     // Push backward/forward (axial)
-    currentG = XPLMGetDataf(mGAxialDataRef);
+    currentG = gs > 1 ? XPLMGetDataf(mGAxialDataRef) : 0;
     if (filter) {
         currentG = mLastAxialG + (currentG - mLastAxialG) * 0.1;
     }
@@ -91,7 +93,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
     position.z += mLastZ;
 
     // Heading
-    currentG = XPLMGetDataf(mGSideDataRef);
+    currentG = gs > 1 ? XPLMGetDataf(mGSideDataRef) : 0;
     mYawFilter.insert(mYawFilter.begin(), currentG);
     while (mYawFilter.size() > mDamper)
         mYawFilter.pop_back();
@@ -115,7 +117,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
     position.x += mLastX;
 
     // Pitch
-    currentG = XPLMGetDataf(mGNormalDataRef);
+    currentG = gs > 1 ? XPLMGetDataf(mGNormalDataRef) : 1;
     if (filter) {
         currentG = mLastNormG + (currentG - mLastNormG) * 0.1;
     }

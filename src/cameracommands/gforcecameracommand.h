@@ -47,6 +47,7 @@ class GForceCameraCommand : public CameraCommand
         XPLMDataRef mRadioAltDataRef;
         XPLMDataRef mOnGroundDataRef;
         XPLMDataRef mBrakesDataRef;
+        XPLMDataRef mGSDataRef;
 };
 
 #endif // GFORCECAMERACOMMAND_H

@@ -15,6 +15,7 @@ GroundRollCameraCommand::GroundRollCameraCommand()
     mOnGroundDataRef = XPLMFindDataRef("sim/flightmodel/failures/onground_any");
     mGSideDataRef = XPLMFindDataRef("sim/flightmodel/forces/g_side");
     mBrakesDataRef = XPLMFindDataRef("sim/cockpit2/controls/parking_brake_ratio");
+    mGSDataRef = XPLMFindDataRef("sim/flightmodel/position/groundspeed");
     // Setup the private vars
     mResponse = 25;
     mLastPitch = 0;
@@ -46,7 +47,7 @@ void GroundRollCameraCommand::execute(CameraPosition &position)
     if (!pEnabled)
         return;
 
-    if (XPLMGetDatai(mOnGroundDataRef)) {
+    if (XPLMGetDatai(mOnGroundDataRef) && XPLMGetDataf(mGSDataRef) > 1) {
         currentNormalG = std::max(0.92f, std::min(1.08f, XPLMGetDataf(mGNormalDataRef)));
         if (XPLMGetDataf(mBrakesDataRef) > 0) {
             currentNormalG = mLastNormG + (currentNormalG - mLastNormG) * 0.1;
