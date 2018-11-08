@@ -2,11 +2,15 @@
 
 #include <CHeaders/XPLM/XPLMDataAccess.h>
 #include <CHeaders/XPLM/XPLMUtilities.h>
+#include <CHeaders/XPLM/XPLMProcessing.h>
+#include <CHeaders/XPLM/XPLMPlugin.h>
 
 #include "cameracommands/gforcecameracommand.h"
 #include "helpers.h"
 #include "cameraposition.h"
 #include "interfaces/ivisitor.h"
+
+#define MSG_ADD_DATAREF 0x01000000
 
 GForceCameraCommand::GForceCameraCommand()
 {
@@ -30,11 +34,41 @@ GForceCameraCommand::GForceCameraCommand()
     mLastRoll = 0;
     mLastNormG = 1;
     mLastAxialG = 0;
+    mGeneralSensitivity = 1;
 }
 
 GForceCameraCommand::~GForceCameraCommand()
 {
 
+}
+
+void GForceCameraCommand::on_enable()
+{
+    int datarefEditorId = XPLMFindPluginBySignature("xplanesdk.examples.DataRefEditor");
+
+    // Publish the drefs
+    mGeneralSensitivityDataRef = XPLMRegisterDataAccessor(
+        "simcoders/headshake/gforce/sensitivity", xplmType_Float, 1, NULL, NULL,
+        [](void* refCon) -> float {
+            if (refCon) return reinterpret_cast<GForceCameraCommand*>(refCon)->mGeneralSensitivity;
+            return 0;
+        }, [](void* refCon, float value) -> void {
+            if (refCon) {
+                if (value < 0) {
+                    value = 0;
+                }
+                if (value > 1) {
+                    value = 1;
+                }
+                reinterpret_cast<GForceCameraCommand*>(refCon)->mGeneralSensitivity = value;
+            }
+        }, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, this, this);
+    XPLMSendMessageToPlugin(datarefEditorId, MSG_ADD_DATAREF, (void*)"simcoders/headshake/gforce/sensitivity");
+}
+
+void GForceCameraCommand::on_disable()
+{
+    XPLMUnregisterDataAccessor(mGeneralSensitivityDataRef);
 }
 
 void GForceCameraCommand::execute(CameraPosition &position)
@@ -87,8 +121,8 @@ void GForceCameraCommand::execute(CameraPosition &position)
         mZFilter.pop_back();
     }
     acc = continue_log(average(mZFilter));
-    mLastZ -= (acc * mZResponse / 500.0f);
-    mLastPitch -= (acc * mZResponse / 7.5f);
+    mLastZ -= (acc * mZResponse * mGeneralSensitivity / 500.0f);
+    mLastPitch -= (acc * mZResponse * mGeneralSensitivity / 7.5f);
     position.y += -mLastZ / 2.0f;
     position.z += mLastZ;
 
@@ -98,13 +132,13 @@ void GForceCameraCommand::execute(CameraPosition &position)
     while (mYawFilter.size() > mDamper)
         mYawFilter.pop_back();
     acc = continue_log(average(mYawFilter));
-    mLastYaw -= (acc * mYawResponse / 15);
+    mLastYaw -= (acc * mYawResponse * mGeneralSensitivity / 15);
     position.yaw += mLastYaw;
 
     // Roll
     // (works like the heading but with a different response)
     if (acc < 0.005 || acc > 0.005) {
-        mLastRoll -= (acc * mYawResponse / 5);
+        mLastRoll -= (acc * mYawResponse * mGeneralSensitivity / 5);
         position.roll += mLastRoll;
     } else {
         mLastRoll = 0;
@@ -113,7 +147,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
 
     // X
     // (works like the heading but with a different response)
-    mLastX -= (acc * mYawResponse / 500);
+    mLastX -= (acc * mYawResponse * mGeneralSensitivity / 500);
     position.x += mLastX;
 
     // Pitch
@@ -126,7 +160,7 @@ void GForceCameraCommand::execute(CameraPosition &position)
     while (mPitchFilter.size() > mDamper)
         mPitchFilter.pop_back();
     acc = average(mPitchFilter);
-    mLastPitch -= (continue_log(acc) * mPitchResponse / 10.0f);
+    mLastPitch -= (continue_log(acc) * mPitchResponse * mGeneralSensitivity / 10.0f);
     position.pitch += mLastPitch;
 }
 

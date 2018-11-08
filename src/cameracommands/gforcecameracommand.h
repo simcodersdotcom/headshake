@@ -24,6 +24,8 @@ class GForceCameraCommand : public CameraCommand
         float get_acceleration_response();
         void set_yaw_response(float response);
         float get_yaw_response();
+        void on_enable() override;
+        void on_disable() override;
     protected:
     private:
         unsigned int mDamper;
@@ -41,6 +43,7 @@ class GForceCameraCommand : public CameraCommand
         float mZResponse;
         float mLastNormG;
         float mLastAxialG;
+        float mGeneralSensitivity;
         XPLMDataRef mGNormalDataRef;
         XPLMDataRef mGAxialDataRef;
         XPLMDataRef mGSideDataRef;
@@ -48,6 +51,7 @@ class GForceCameraCommand : public CameraCommand
         XPLMDataRef mOnGroundDataRef;
         XPLMDataRef mBrakesDataRef;
         XPLMDataRef mGSDataRef;
+        XPLMDataRef mGeneralSensitivityDataRef;
 };
 
 #endif // GFORCECAMERACOMMAND_H
