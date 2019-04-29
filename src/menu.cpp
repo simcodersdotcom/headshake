@@ -148,8 +148,8 @@ void Menu::visit(CameraControl &control)
     XPCreateWidget(x1 - 5, y, x2, y - 30, 1, "REALITY EXPANSION PACK INTEGRATION", 0, mWidgetId, xpWidgetClass_Caption);
     if (mShowAds) {
         XPCreateWidget(x1 - 5, y, x2, y - 90, 1, "HeadShake can work in pair with the Reality Expansion Pack, our hyper-realistic addon for X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
-        XPCreateWidget(x1 - 5, y, x2, y - 120, 1, "It adds a damages and maintenance system, real world procedures, relistic flight dynamics and much more to X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
-        XPCreateWidget(x1 - 5, y, x2, y - 150, 1, "You can get more informations at https://www.simcoders.com", 0, mWidgetId, xpWidgetClass_Caption);
+        XPCreateWidget(x1 - 5, y, x2, y - 120, 1, "It adds a damages & maintenance system, realistic flight dynamics and much more to X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
+        XPCreateWidget(x1 - 5, y, x2, y - 150, 1, "Get more informations at https://www.simcoders.com/rep", 0, mWidgetId, xpWidgetClass_Caption);
     } else {
         XPCreateWidget(x1 - 5, y, x2, y - 85, 1, "HeadShake is correctly working in pair with the Reality Expansion Pack.", 0, mWidgetId, xpWidgetClass_Caption);
         XPCreateWidget(x1 - 5, y, x2, y - 130, 1, "Thank you for being a REP licence holder. We are a small company and your help is very much appreciated.", 0, mWidgetId, xpWidgetClass_Caption);
