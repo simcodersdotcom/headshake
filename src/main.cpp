@@ -34,6 +34,7 @@ PLUGIN_API int XPluginStart(
 
 PLUGIN_API void	XPluginStop(void)
 {
+	CameraControl::get_instance()->reset_view();
 }
 
 PLUGIN_API int XPluginEnable(void)

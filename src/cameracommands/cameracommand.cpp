@@ -22,6 +22,11 @@ void CameraCommand::set_enabled(bool enabled)
     pEnabled = enabled;
 }
 
+void CameraCommand::toggle()
+{
+	pEnabled = !pEnabled;
+}
+
 void CameraCommand::execute(CameraPosition&)
 {
 
