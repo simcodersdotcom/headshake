@@ -325,8 +325,6 @@ void Menu::visit(GForceCameraCommand& command)
 		}
 		return 0;
 		});
-
-
 }
 
 void Menu::visit(TouchdownCameraCommand& command)
@@ -744,7 +742,7 @@ void Menu::visit(LevelHeadCameraCommand& command)
 
 	// Add the enable checkbox
 	y = mTop - 40;
-	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable level head effect", 0, mWidgetId, xpWidgetClass_Button);
+	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the level head effect", 0, mWidgetId, xpWidgetClass_Button);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonState, command.is_enabled());
