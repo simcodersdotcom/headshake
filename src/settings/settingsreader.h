@@ -18,10 +18,10 @@ class SettingsReader : public IVisitor
         void visit(LookAheadCameraCommand&);
         void visit(PistonEngineCameraCommand&);
         void visit(RotorCameraCommand&);
-        void visit(GunCameraCommand&);
         void visit(GroundRollCameraCommand&);
         void visit(TaxiLookAheadCameraCommand&);
         void visit(TouchdownCameraCommand&);
+		void visit(LevelHeadCameraCommand&);
     protected:
     private:
         std::map<std::string, std::string> mMap;

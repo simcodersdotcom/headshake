@@ -9,9 +9,9 @@
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
 #include "cameracommands/taxilookaheadcameracommand.h"
-#include "cameracommands/guncameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
+#include "cameracommands/levelheadcameracommand.h"
 #include "helpers.h"
 
 SettingsWriter::SettingsWriter()
@@ -104,15 +104,19 @@ void SettingsWriter::visit(TouchdownCameraCommand &command)
     }
 }
 
-void SettingsWriter::visit(GunCameraCommand&)
-{
-
-}
-
 void SettingsWriter::visit(RotorCameraCommand &command)
 {
     if (mFile != NULL) {
         fprintf(mFile, "cameracommand.rotor.enabled=%s\n", command.is_enabled() ? "1" : "0");
         fprintf(mFile, "cameracommand.rotor.response=%.0f\n", command.get_response());
     }
+}
+
+void SettingsWriter::visit(LevelHeadCameraCommand &command)
+{
+	if (mFile != NULL) {
+		fprintf(mFile, "cameracommand.levelhead.enabled=%s\n", command.is_enabled() ? "1" : "0");
+		fprintf(mFile, "cameracommand.levelhead.response=%.0f\n", command.get_response());
+		fprintf(mFile, "cameracommand.levelhead.maxbank=%.0f\n", command.get_max_bank());
+	}
 }

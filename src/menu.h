@@ -23,10 +23,11 @@ public:
 	void visit(LookAheadCameraCommand&);
 	void visit(PistonEngineCameraCommand&);
 	void visit(RotorCameraCommand&);
-	void visit(GunCameraCommand&);
 	void visit(GroundRollCameraCommand&);
 	void visit(TaxiLookAheadCameraCommand&);
 	void visit(TouchdownCameraCommand&);
+	void visit(LevelHeadCameraCommand&);
+	void visit_multimonitor(bool multimonitorCompatibility);
 protected:
 private:
 	/**
@@ -50,6 +51,7 @@ private:
 	int mLeft;
 	int mTop;
 	int mRight;
+	int mBottom;
 	int mAdsHeight;
 	bool mShowAds;
 	CameraControl* mCameraControl;
@@ -60,6 +62,7 @@ private:
 	GroundRollCameraCommand* mGroundRollCameraCommand;
 	TaxiLookAheadCameraCommand* mTaxiLookAheadCameraCommand;
 	TouchdownCameraCommand* mTouchdownCameraCommand;
+	LevelHeadCameraCommand* mLevelHeadCameraCommand;
 };
 
 #endif // MENU_H

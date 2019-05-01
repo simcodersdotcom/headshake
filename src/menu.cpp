@@ -20,6 +20,7 @@
 #include "cameracommands/groundrollcameracommand.h"
 #include "cameracommands/taxilookaheadcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
+#include "cameracommands/levelheadcameracommand.h"
 
 // Custom messages
 #define UPDATE_GFORCE_PITCH        1
@@ -31,6 +32,8 @@
 #define UPDATE_PISTONENGINE        7
 #define UPDATE_ROTOR               8
 #define UPDATE_TOUCHDOWN           9
+#define UPDATE_LEVELHEAD_RESP      10
+#define UPDATE_LEVELHEAD_BANK      11
 
 /**
 |-------------------------------
@@ -97,7 +100,7 @@ Menu::Menu()
 {
 	// Define the main window width
 	// The other values are calculated at run time
-	mWidth = 700;
+	mWidth = 1050;
 	mAdsHeight = 100;
 	mWidgetId = nullptr;
 }
@@ -111,18 +114,17 @@ Menu::~Menu()
 void Menu::visit(CameraControl& control)
 {
 	int w, h, x1, x2;
-	XPWidgetID subw;
+	XPWidgetID subw, enableButton;
 	XPLMGetScreenSize(&w, &h);
-	mHeight = (control.error() ? 560 : 510) + mAdsHeight;
+	mHeight = (control.error() ? 490 : 440) + mAdsHeight;
 	mLeft = (w - mWidth) / 2;
 	mTop = (h + mHeight) / 2;
 	mRight = mLeft + mWidth;
-	int bottom = mTop - mHeight;
-	XPWidgetID compatibilityButton;
+	mBottom = mTop - mHeight;
 	mShowAds = XPLMFindPluginBySignature("com.simcoders.rep") == XPLM_NO_PLUGIN_ID;
 
 	// Create the Main Widget window
-	mWidgetId = XPCreateWidget(mLeft, mTop, mRight, bottom, 1, "SimCoders - HeadShake", 1, 0, xpWidgetClass_MainWindow);
+	mWidgetId = XPCreateWidget(mLeft, mTop, mRight, mBottom, 1, "SimCoders - HeadShake", 1, 0, xpWidgetClass_MainWindow);
 	XPSetWidgetProperty(mWidgetId, xpProperty_MainWindowHasCloseBoxes, 1);
 	XPAddWidgetCallback(mWidgetId, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		// When the close buttons are clicked, close the window
@@ -149,8 +151,8 @@ void Menu::visit(CameraControl& control)
 	XPCreateWidget(x1 - 5, y, x2, y - 30, 1, "REALITY EXPANSION PACK INTEGRATION", 0, mWidgetId, xpWidgetClass_Caption);
 	if (mShowAds) {
 		XPCreateWidget(x1 - 5, y, x2, y - 90, 1, "HeadShake can work in pair with the Reality Expansion Pack, our hyper-realistic addon for X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
-		XPCreateWidget(x1 - 5, y, x2, y - 120, 1, "It adds a damages and maintenance system, real world procedures, relistic flight dynamics and much more to X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
-		XPCreateWidget(x1 - 5, y, x2, y - 150, 1, "You can get more informations at https://www.simcoders.com", 0, mWidgetId, xpWidgetClass_Caption);
+		XPCreateWidget(x1 - 5, y, x2, y - 120, 1, "It adds a damage & maintenance system, realistic flight dynamics and much more to X-Plane.", 0, mWidgetId, xpWidgetClass_Caption);
+		XPCreateWidget(x1 - 5, y, x2, y - 150, 1, "Get more informations at https://www.simcoders.com/rep", 0, mWidgetId, xpWidgetClass_Caption);
 	}
 	else {
 		XPCreateWidget(x1 - 5, y, x2, y - 85, 1, "HeadShake is correctly working in pair with the Reality Expansion Pack.", 0, mWidgetId, xpWidgetClass_Caption);
@@ -164,18 +166,18 @@ void Menu::visit(CameraControl& control)
 	// Create the general "Enable/Disable" menu
 	y = mTop - 30;
 	x1 = mLeft + 10;
-	x2 = x1 + mWidth / 2 - 20;
-	subw = XPCreateWidget(x1, y, x2, y - 150, 1, "General", 0, mWidgetId, xpWidgetClass_SubWindow);
+	x2 = x1 + mWidth / 3 - 20;
+	subw = XPCreateWidget(x1, y, x2, y - 158, 1, "General", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 	x1 += 10;
 	x2 -= 10;
 	y -= 10;
 	// Add the compatibility checkbox
-	compatibilityButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable HeadShake", 0, mWidgetId, xpWidgetClass_Button);
-	XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonType, xpRadioButton);
-	XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
-	XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonState, control.get_enabled());
-	XPAddWidgetCallback(compatibilityButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable HeadShake", 0, mWidgetId, xpWidgetClass_Button);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonState, control.get_enabled());
+	XPAddWidgetCallback(enableButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		int inExit;
 		if (inMessage == xpMsg_ButtonStateChanged) {
 			Menu::mInstance->mCameraControl->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
@@ -191,44 +193,14 @@ void Menu::visit(CameraControl& control)
 	XPCreateWidget(x1, y, x1 + 10, y - 150, 1, " - simcoders/headshake/toggle_headshake", 0, mWidgetId, xpWidgetClass_Caption);
 	XPCreateWidget(x1, y, x1 + 10, y - 180, 1, " - simcoders/headshake/toggle_menu", 0, mWidgetId, xpWidgetClass_Caption);
 
-	if (mCameraControl->get_xp_version() < 11.02) {
-		// Create the multimonitor compatibility menu
-		// Place it at the bottom
-		// Set the subwindow top like main top minus the gforce height,
-		// the engine vibrations height, the ground roll height, the touchdown height, the piston engine height, the roto height
-		// and some padding
-		y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
-		x1 = mLeft + mWidth / 2 + 10;
-		x2 = x1 + mWidth / 2 - 20;
-		subw = XPCreateWidget(x1, y, x2, y - 70, 1, "Compatibility", 0, mWidgetId, xpWidgetClass_SubWindow);
-		XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
-		x1 += 10;
-		x2 -= 10;
-		y -= 10;
-		// Add the compatibility checkbox
-		compatibilityButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable multimonitor compatibility", 0, mWidgetId, xpWidgetClass_Button);
-		XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonType, xpRadioButton);
-		XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
-		XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonState, control.get_multimonitor_compatibility());
-		XPAddWidgetCallback(compatibilityButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
-			int inExit;
-			if (inMessage == xpMsg_ButtonStateChanged) {
-				Menu::mInstance->mCameraControl->set_multimonitor_compatibility(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
-				return 1;
-			}
-			return 0;
-			});
-		y -= 10;
-		// Add the description
-		XPCreateWidget(x1, y, x1 + 10, y - 30, 1, "Enable this if you use more screens.", 0, mWidgetId, xpWidgetClass_Caption);
-	}
+	visit_multimonitor(control.get_multimonitor_compatibility());
 }
 
 // Create and handle the gforce subwindow
 void Menu::visit(GForceCameraCommand& command)
 {
 	XPWidgetID subw;
-	int x1, x2, y;
+	int x1, x2, y = mTop - 188 - 10;
 	XPWidgetID enableButton;
 	XPWidgetID pitchScrollbar;
 	XPWidgetID pitchLabel;
@@ -239,18 +211,15 @@ void Menu::visit(GForceCameraCommand& command)
 	char buffer[64];
 
 	mGforceCameraCommand = &command;
-
-	x1 = mLeft + mWidth / 2 + 10;
-	x2 = x1 + mWidth / 2 - 20;
-
-	subw = XPCreateWidget(x1, mTop - 30, x2, mTop - 180, 1, "GForce Effect Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	
+	subw = XPCreateWidget(mLeft + 10, y, mLeft + (mWidth / 3) - 10, y - 150, 1, "GForce Effect Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
-	x1 += 10;
-	x2 -= 10;
+	x1 = mLeft + 20;
+	x2 = mLeft + mWidth / 3 - 20;
 
 	// Add the enable checkbox
-	y = mTop - 40;
+	y = y - 10;
 	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the g-force effects", 0, mWidgetId, xpWidgetClass_Button);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
@@ -263,11 +232,11 @@ void Menu::visit(GForceCameraCommand& command)
 		}
 		return 0;
 		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_gforce", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_gforce", 0, mWidgetId, xpWidgetClass_Caption);
 	// Add the pitch sensitivity label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Pitch response: %.0f", mGforceCameraCommand->get_pitch_response());
-	pitchLabel = XPCreateWidget(x1 - 5, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	pitchLabel = XPCreateWidget(x1 - 5, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(pitchLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_GFORCE_PITCH) {
@@ -279,7 +248,7 @@ void Menu::visit(GForceCameraCommand& command)
 		return 0;
 		});
 	y = y - 20;
-	pitchScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	pitchScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(pitchScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(pitchScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(pitchScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_pitch_response());
@@ -298,7 +267,7 @@ void Menu::visit(GForceCameraCommand& command)
 	// Add the yaw sensitivity label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Yaw response: %.0f", mGforceCameraCommand->get_yaw_response());
-	yawLabel = XPCreateWidget(x1 - 5, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	yawLabel = XPCreateWidget(x1 - 5, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(yawLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_GFORCE_YAW) {
@@ -310,7 +279,7 @@ void Menu::visit(GForceCameraCommand& command)
 		return 0;
 		});
 	y = y - 20;
-	yawScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	yawScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(yawScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(yawScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(yawScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_yaw_response());
@@ -329,7 +298,7 @@ void Menu::visit(GForceCameraCommand& command)
 	// Add the acceleration sensitivity label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Speed change response: %.0f", mGforceCameraCommand->get_acceleration_response());
-	accelerationLabel = XPCreateWidget(x1 - 5, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	accelerationLabel = XPCreateWidget(x1 - 5, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(accelerationLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_GFORCE_ACCELERATION) {
@@ -341,7 +310,7 @@ void Menu::visit(GForceCameraCommand& command)
 		return 0;
 		});
 	y = y - 20;
-	accelerationScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	accelerationScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(accelerationScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(accelerationScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(accelerationScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_acceleration_response());
@@ -360,118 +329,55 @@ void Menu::visit(GForceCameraCommand& command)
 
 }
 
-void Menu::visit(LookAheadCameraCommand& command)
-{
-	XPWidgetID subw;
-	XPWidgetID lookaheadScrollbar;
-	XPWidgetID lookaheadLabel;
-	XPWidgetID lookaheadEnabledButton;
-	char buffer[64];
-	int x1, x2, y = mTop - 180 - 10;
-
-	mLookAheadCameraCommand = &command;
-	subw = XPCreateWidget(mLeft + 10, y, mRight - (mWidth / 2) - 10, y - 70, 1, "LookAhead Effect Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
-	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
-
-	x1 = mLeft + 20;
-	x2 = mRight - 20;
-
-	// Add the enable checkbox
-	y = y - 10;
-	lookaheadEnabledButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the look ahead effects", 0, mWidgetId, xpWidgetClass_Button);
-	XPSetWidgetProperty(lookaheadEnabledButton, xpProperty_ButtonType, xpRadioButton);
-	XPSetWidgetProperty(lookaheadEnabledButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
-	XPSetWidgetProperty(lookaheadEnabledButton, xpProperty_ButtonState, command.is_enabled());
-	XPAddWidgetCallback(lookaheadEnabledButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
-		int inExit;
-		if (inMessage == xpMsg_ButtonStateChanged) {
-			Menu::mInstance->mLookAheadCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
-			return 1;
-		}
-		return 0;
-		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_lookahead", 0, mWidgetId, xpWidgetClass_Caption);
-	// Add the sensitivity label + scrollbar
-	y = y - 20;
-	sprintf(buffer, "Lookahead maximum angle: %.0f degrees", mLookAheadCameraCommand->get_response());
-	lookaheadLabel = XPCreateWidget(x1 - 5, y, x2 - (mWidth / 2), y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
-	// On message received update the label
-	XPAddWidgetCallback(lookaheadLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
-		if (inMessage == xpMsg_UserStart + UPDATE_GFORCE_LOOKAHEAD) {
-			char mbuffer[64];
-			sprintf(mbuffer, "Lookahead maximum angle: %.0f degrees", Menu::mInstance->mLookAheadCameraCommand->get_response());
-			XPSetWidgetDescriptor(inWidget, mbuffer);
-			return 1;
-		}
-		return 0;
-		});
-	y = y - 20;
-	lookaheadScrollbar = XPCreateWidget(x1 + 5, y, x2 - (mWidth / 2) - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
-	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarMin, 1);
-	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarMax, 90);
-	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
-	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
-	XPAddWidgetCallback(lookaheadScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
-		int inExit;
-		if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
-			Menu::mInstance->mLookAheadCameraCommand->set_response((float)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
-			// Update the label
-			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_GFORCE_LOOKAHEAD, xpMode_Recursive, 0, 0);
-			return 1;
-		}
-		return 0;
-		});
-}
-
-void Menu::visit(GroundRollCameraCommand & command)
+void Menu::visit(TouchdownCameraCommand& command)
 {
 	XPWidgetID subw;
 	int x1, x2;
-	// Set the subwindow top like main top minus the gforce height
-	int y = mTop - 180 - 10 - 70 - 10;
+	// Set the subwindow top like main top minus the gforce height minus some padding
+	int y = mTop - 188 - 10 - 70 - 10 - 70 - 10;
 	XPWidgetID enableButton;
 	XPWidgetID responseScrollbar;
 	XPWidgetID responseLabel;
 	char buffer[16];
 
-	mGroundRollCameraCommand = &command;
-	subw = XPCreateWidget(mLeft + 10, y, mRight - (mWidth / 2) - 10, y - 70, 1, "Ground Roll Shaking Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	mTouchdownCameraCommand = &command;
+	subw = XPCreateWidget(mLeft + 10, y, mLeft + mWidth / 3 - 10, y - 70, 1, "Touchdown effect Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
 	x1 = mLeft + 20;
-	x2 = mRight - 20;
+	x2 = mLeft + mWidth / 3 - 20;
 
 	// Add the enable checkbox
 	y = y - 10;
-	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the ground roll vibrations", 0, mWidgetId, xpWidgetClass_Button);
+	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the touchdown effect", 0, mWidgetId, xpWidgetClass_Button);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonState, command.is_enabled());
 	XPAddWidgetCallback(enableButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		int inExit;
 		if (inMessage == xpMsg_ButtonStateChanged) {
-			Menu::mInstance->mGroundRollCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+			Menu::mInstance->mTouchdownCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
 			return 1;
 		}
 		return 0;
 		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_groundroll", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_touchdown", 0, mWidgetId, xpWidgetClass_Caption);
 	// Add the response label + scrollbar
 	y = y - 20;
-	sprintf(buffer, "Response: %.0f", mGroundRollCameraCommand->get_response());
-	responseLabel = XPCreateWidget(x1, y, x2 - (mWidth / 2), y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	sprintf(buffer, "Response: %.0f", mTouchdownCameraCommand->get_response());
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
-		if (inMessage == xpMsg_UserStart + UPDATE_GROUNDROLL) {
+		if (inMessage == xpMsg_UserStart + UPDATE_TOUCHDOWN) {
 			char mbuffer[16];
-			sprintf(mbuffer, "Response: %.0f", Menu::mInstance->mGroundRollCameraCommand->get_response());
+			sprintf(mbuffer, "Response: %.0f", Menu::mInstance->mTouchdownCameraCommand->get_response());
 			XPSetWidgetDescriptor(inWidget, mbuffer);
 			return 1;
 		}
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - (mWidth / 2) - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
@@ -479,34 +385,35 @@ void Menu::visit(GroundRollCameraCommand & command)
 	XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		int inExit;
 		if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
-			Menu::mInstance->mGroundRollCameraCommand->set_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
-			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_GROUNDROLL, xpMode_Recursive, 0, 0);
+			Menu::mInstance->mTouchdownCameraCommand->set_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_TOUCHDOWN, xpMode_Recursive, 0, 0);
 			return 1;
 		}
 		return 0;
 		});
 }
 
-void Menu::visit(TaxiLookAheadCameraCommand & command)
+void Menu::visit(TaxiLookAheadCameraCommand& command)
 {
 	XPWidgetID subw;
-	int x1, x2;
-	// Set the subwindow top like main top minus the gforce height
-	int y = mTop - 180 - 10;
+	int x1, x2, y;
 	XPWidgetID enableButton;
 	XPWidgetID responseScrollbar;
 	XPWidgetID responseLabel;
 	char buffer[32];
 
+	x1 = mLeft + mWidth / 3 + 10;
+	x2 = x1 + mWidth / 3 - 20;
+
 	mTaxiLookAheadCameraCommand = &command;
-	subw = XPCreateWidget(mLeft + (mWidth / 2) + 10, y, mRight - 10, y - 70 - 10 - 70, 1, "Taxi LookAhead Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	subw = XPCreateWidget(x1, mTop - 30, x2, mTop - 188, 1, "Taxi LookAhead Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
-	x1 = mLeft + (mWidth / 2) + 20;
-	x2 = mRight - 20;
+	x1 += 10;
+	x2 -= 10;
 
 	// Add the enable checkbox
-	y = y - 10;
+	y = mTop - 40;
 	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the taxi lookahead", 0, mWidgetId, xpWidgetClass_Button);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
 	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
@@ -519,11 +426,11 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 		}
 		return 0;
 		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_taxilook", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_taxilook", 0, mWidgetId, xpWidgetClass_Caption);
 	// Add the rudder response label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Rudder response: %.0f", mTaxiLookAheadCameraCommand->get_rudder_response());
-	responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD) {
@@ -535,7 +442,7 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_rudder_response());
@@ -553,7 +460,7 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 	// Add the turn response label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Turn response: %.0f", mTaxiLookAheadCameraCommand->get_turn_response());
-	responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD) {
@@ -565,7 +472,7 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_turn_response());
@@ -583,7 +490,7 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 	// Add the lean response label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Lean Response: %.0f", mTaxiLookAheadCameraCommand->get_lean_response());
-	responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_TAXI_LOOKAHEAD) {
@@ -595,7 +502,7 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_lean_response());
@@ -611,55 +518,126 @@ void Menu::visit(TaxiLookAheadCameraCommand & command)
 		});
 }
 
-void Menu::visit(TouchdownCameraCommand & command)
+void Menu::visit(LookAheadCameraCommand& command)
 {
 	XPWidgetID subw;
+	XPWidgetID lookaheadScrollbar;
+	XPWidgetID lookaheadLabel;
+	XPWidgetID lookaheadEnabledButton;
+	char buffer[64];
 	int x1, x2;
-	// Set the subwindow top like main top minus the gforce height minus the ground roll height
-	int y = mTop - 180 - 10 - 70 - 10 - 70 - 10;
-	XPWidgetID enableButton;
-	XPWidgetID responseScrollbar;
-	XPWidgetID responseLabel;
-	char buffer[16];
+	// Set the subwindow top like main top minus the gforce height
+	int y = mTop - 188 - 10;
 
-	mTouchdownCameraCommand = &command;
-	subw = XPCreateWidget(mLeft + 10, y, mLeft + mWidth / 2 - 10, y - 70, 1, "Touchdown effect Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	x1 = mLeft + mWidth / 3 + 10;
+	x2 = x1 + mWidth / 3 - 20;
+
+	mLookAheadCameraCommand = &command;
+	subw = XPCreateWidget(x1, y, x2, y - 70, 1, "LookAhead Effect Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
-	x1 = mLeft + 20;
-	x2 = mLeft + mWidth / 2 - 20;
+	x1 += 10;
+	x2 -= 10;
 
 	// Add the enable checkbox
 	y = y - 10;
-	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the touchdown effect", 0, mWidgetId, xpWidgetClass_Button);
-	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
-	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
-	XPSetWidgetProperty(enableButton, xpProperty_ButtonState, command.is_enabled());
-	XPAddWidgetCallback(enableButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+	lookaheadEnabledButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the look ahead effects", 0, mWidgetId, xpWidgetClass_Button);
+	XPSetWidgetProperty(lookaheadEnabledButton, xpProperty_ButtonType, xpRadioButton);
+	XPSetWidgetProperty(lookaheadEnabledButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+	XPSetWidgetProperty(lookaheadEnabledButton, xpProperty_ButtonState, command.is_enabled());
+	XPAddWidgetCallback(lookaheadEnabledButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		int inExit;
 		if (inMessage == xpMsg_ButtonStateChanged) {
-			Menu::mInstance->mTouchdownCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+			Menu::mInstance->mLookAheadCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
 			return 1;
 		}
 		return 0;
 		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_touchdown", 0, mWidgetId, xpWidgetClass_Caption);
-	// Add the response label + scrollbar
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_lookahead", 0, mWidgetId, xpWidgetClass_Caption);
+	// Add the sensitivity label + scrollbar
 	y = y - 20;
-	sprintf(buffer, "Response: %.0f", mTouchdownCameraCommand->get_response());
-	responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	sprintf(buffer, "Lookahead maximum angle: %.0f degrees", mLookAheadCameraCommand->get_response());
+	lookaheadLabel = XPCreateWidget(x1 - 5, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
-	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
-		if (inMessage == xpMsg_UserStart + UPDATE_TOUCHDOWN) {
-			char mbuffer[16];
-			sprintf(mbuffer, "Response: %.0f", Menu::mInstance->mTouchdownCameraCommand->get_response());
+	XPAddWidgetCallback(lookaheadLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		if (inMessage == xpMsg_UserStart + UPDATE_GFORCE_LOOKAHEAD) {
+			char mbuffer[64];
+			sprintf(mbuffer, "Lookahead maximum angle: %.0f degrees", Menu::mInstance->mLookAheadCameraCommand->get_response());
 			XPSetWidgetDescriptor(inWidget, mbuffer);
 			return 1;
 		}
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	lookaheadScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarMin, 1);
+	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarMax, 90);
+	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
+	XPSetWidgetProperty(lookaheadScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
+	XPAddWidgetCallback(lookaheadScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		int inExit;
+		if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
+			Menu::mInstance->mLookAheadCameraCommand->set_response((float)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+			// Update the label
+			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_GFORCE_LOOKAHEAD, xpMode_Recursive, 0, 0);
+			return 1;
+		}
+		return 0;
+		});
+}
+
+void Menu::visit(GroundRollCameraCommand& command)
+{
+	XPWidgetID subw;
+	int x1, x2;
+	// Set the subwindow top like main top minus the taxi lookahead height minus padding minus look ahead minus padding
+	int y = mTop - 188 - 10 - 70 - 10;
+	XPWidgetID enableButton;
+	XPWidgetID responseScrollbar;
+	XPWidgetID responseLabel;
+	char buffer[16];
+
+	x1 = mLeft + mWidth / 3 + 10;
+	x2 = x1 + mWidth / 3 - 20;
+
+	mGroundRollCameraCommand = &command;
+	subw = XPCreateWidget(x1, y, x2, y - 70, 1, "Ground Roll Shaking Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
+
+	x1 += 10;
+	x2 -= 10;
+
+	// Add the enable checkbox
+	y = y - 10;
+	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable the ground roll vibrations", 0, mWidgetId, xpWidgetClass_Button);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonState, command.is_enabled());
+	XPAddWidgetCallback(enableButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		int inExit;
+		if (inMessage == xpMsg_ButtonStateChanged) {
+			Menu::mInstance->mGroundRollCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+			return 1;
+		}
+		return 0;
+		});
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_groundroll", 0, mWidgetId, xpWidgetClass_Caption);
+	// Add the response label + scrollbar
+	y = y - 20;
+	sprintf(buffer, "Response: %.0f", mGroundRollCameraCommand->get_response());
+	responseLabel = XPCreateWidget(x1 - 5, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	// On message received update the label
+	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		if (inMessage == xpMsg_UserStart + UPDATE_GROUNDROLL) {
+			char mbuffer[16];
+			sprintf(mbuffer, "Response: %.0f", Menu::mInstance->mGroundRollCameraCommand->get_response());
+			XPSetWidgetDescriptor(inWidget, mbuffer);
+			return 1;
+		}
+		return 0;
+		});
+	y = y - 20;
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
@@ -667,8 +645,8 @@ void Menu::visit(TouchdownCameraCommand & command)
 	XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		int inExit;
 		if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
-			Menu::mInstance->mTouchdownCameraCommand->set_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
-			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_TOUCHDOWN, xpMode_Recursive, 0, 0);
+			Menu::mInstance->mGroundRollCameraCommand->set_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_GROUNDROLL, xpMode_Recursive, 0, 0);
 			return 1;
 		}
 		return 0;
@@ -680,8 +658,9 @@ void Menu::visit(PistonEngineCameraCommand & command)
 {
 	XPWidgetID subw;
 	int x1, x2;
-	// Set the subwindow top like main top minus the gforce height minus some padding and the ground roll height minus the touchdown height
-	int y = mTop - 180 - 10 - 70 - 10 - 70 - 10;
+	// Set the subwindow top like main top minus the taxi lookahead height minus some padding and the look ahead
+	// height minus the ground roll height
+	int y = mTop - 188 - 10 - 70 - 10 - 70 - 10;
 	XPWidgetID enableButton;
 	XPWidgetID responseScrollbar;
 	XPWidgetID responseLabel;
@@ -689,8 +668,8 @@ void Menu::visit(PistonEngineCameraCommand & command)
 
 	mPistonEngineCameraCommand = &command;
 
-	x1 = mLeft + mWidth / 2 + 10;
-	x2 = x1 + mWidth / 2 - 20;
+	x1 = mLeft + mWidth / 3 + 10;
+	x2 = x1 + mWidth / 3 - 20;
 
 	subw = XPCreateWidget(x1, y, x2, y - 70, 1, "Piston Engine Vibrations Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
@@ -712,11 +691,11 @@ void Menu::visit(PistonEngineCameraCommand & command)
 		}
 		return 0;
 		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_pistonvib", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_pistonvib", 0, mWidgetId, xpWidgetClass_Caption);
 	// Add the response label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Response: %.0f", mPistonEngineCameraCommand->get_response());
-	responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_PISTONENGINE) {
@@ -728,7 +707,7 @@ void Menu::visit(PistonEngineCameraCommand & command)
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
@@ -744,24 +723,121 @@ void Menu::visit(PistonEngineCameraCommand & command)
 		});
 }
 
+void Menu::visit(LevelHeadCameraCommand& command)
+{
+	XPWidgetID subw;
+	int x1, x2, y;
+	XPWidgetID enableButton;
+	XPWidgetID responseScrollbar;
+	XPWidgetID responseLabel;
+	char buffer[32];
+
+	x2 = mRight - 20;
+	x1 = mRight - mWidth / 3 + 10;
+
+	mLevelHeadCameraCommand = &command;
+	subw = XPCreateWidget(x1, mTop - 30, x2, mTop - 150, 1, "Level head Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
+
+	x1 += 10;
+	x2 -= 10;
+
+	// Add the enable checkbox
+	y = mTop - 40;
+	enableButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable level head effect", 0, mWidgetId, xpWidgetClass_Button);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonType, xpRadioButton);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+	XPSetWidgetProperty(enableButton, xpProperty_ButtonState, command.is_enabled());
+	XPAddWidgetCallback(enableButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		int inExit;
+		if (inMessage == xpMsg_ButtonStateChanged) {
+			Menu::mInstance->mLevelHeadCameraCommand->set_enabled(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+			return 1;
+		}
+		return 0;
+		});
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_levelhead", 0, mWidgetId, xpWidgetClass_Caption);
+	// Add the response label + scrollbar
+	y = y - 20;
+	sprintf(buffer, "Response: %.0f", mLevelHeadCameraCommand->get_response());
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	// On message received update the label
+	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		if (inMessage == xpMsg_UserStart + UPDATE_LEVELHEAD_RESP) {
+			char mbuffer[32];
+			sprintf(mbuffer, "Response: %.0f", Menu::mInstance->mLevelHeadCameraCommand->get_response());
+			XPSetWidgetDescriptor(inWidget, mbuffer);
+			return 1;
+		}
+		return 0;
+		});
+	y = y - 20;
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
+	XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		int inExit;
+		if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
+			Menu::mInstance->mLevelHeadCameraCommand->set_response((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_LEVELHEAD_RESP, xpMode_Recursive, 0, 0);
+			return 1;
+		}
+		return 0;
+		});
+
+	// Add the max bank label + scrollbar
+	y = y - 20;
+	sprintf(buffer, "Maximum bank angle: %.0f degrees", mLevelHeadCameraCommand->get_max_bank());
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	// On message received update the label
+	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		if (inMessage == xpMsg_UserStart + UPDATE_LEVELHEAD_BANK) {
+			char mbuffer[32];
+			sprintf(mbuffer, "Maximum bank angle: %.0f degrees", Menu::mInstance->mLevelHeadCameraCommand->get_max_bank());
+			XPSetWidgetDescriptor(inWidget, mbuffer);
+			return 1;
+		}
+		return 0;
+		});
+	y = y - 20;
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 90);
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_max_bank());
+	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarType, xpScrollBarTypeSlider);
+	XPAddWidgetCallback(responseScrollbar, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		int inExit;
+		if (inMessage == xpMsg_ScrollBarSliderPositionChanged) {
+			Menu::mInstance->mLevelHeadCameraCommand->set_max_bank((int)(XPGetWidgetProperty(inWidget, xpProperty_ScrollBarSliderPosition, &inExit)));
+			XPSendMessageToWidget(Menu::mInstance->mWidgetId, xpMsg_UserStart + UPDATE_LEVELHEAD_BANK, xpMode_Recursive, 0, 0);
+			return 1;
+		}
+		return 0;
+		});
+}
+
 void Menu::visit(RotorCameraCommand & command)
 {
 	XPWidgetID subw;
 	int x1, x2;
-	// Set the subwindow top like main top minus the gforce height,
-	// the engine vibrations height, the ground roll height, the touchdown height, the piston engine height and some padding
-	int y = mTop - 180 - 10 - 70 - 10 - 70 - 10 - 70 - 10;
+	// Set the subwindow top like main top minus the level head height minus some long padding
+	int y = mTop - 150 - 10;
 	XPWidgetID enableButton;
 	XPWidgetID responseScrollbar;
 	XPWidgetID responseLabel;
 	char buffer[16];
 
+	x1 = mRight - mWidth / 3 + 10;
+	x2 = mRight - 20;
+
 	mRotorCameraCommand = &command;
-	subw = XPCreateWidget(mLeft + 10, y, mLeft + mWidth / 2 - 10, y - 70, 1, "Rotor Vibrations Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
+	subw = XPCreateWidget(x1, y, x2, y - 70, 1, "Rotor Vibrations Settings", 0, mWidgetId, xpWidgetClass_SubWindow);
 	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
 
-	x1 = mLeft + 20;
-	x2 = mLeft + mWidth / 2 - 20;
+	x1 += 10;
+	x2 -= 10;
 
 	// Add the enable checkbox
 	y = y - 10;
@@ -777,11 +853,11 @@ void Menu::visit(RotorCameraCommand & command)
 		}
 		return 0;
 		});
-	XPCreateWidget(x1 + 14, y, x1 + 24, y - 28, 1, "Command: simcoders/headshake/toggle_rotorvib", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1 + 14, y, x1 + 24, y - 32, 1, "Command: simcoders/headshake/toggle_rotorvib", 0, mWidgetId, xpWidgetClass_Caption);
 	// Add the response label + scrollbar
 	y = y - 20;
 	sprintf(buffer, "Response: %.0f", mRotorCameraCommand->get_response());
-	responseLabel = XPCreateWidget(x1, y, x2, y - 10, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
+	responseLabel = XPCreateWidget(x1, y, x2, y - 18, 1, buffer, 0, mWidgetId, xpWidgetClass_Caption);
 	// On message received update the label
 	XPAddWidgetCallback(responseLabel, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
 		if (inMessage == xpMsg_UserStart + UPDATE_ROTOR) {
@@ -793,7 +869,7 @@ void Menu::visit(RotorCameraCommand & command)
 		return 0;
 		});
 	y = y - 20;
-	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 10, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
+	responseScrollbar = XPCreateWidget(x1 + 5, y, x2 - 5, y - 18, 1, "", 0, mWidgetId, xpWidgetClass_ScrollBar);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMin, 1);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarMax, 100);
 	XPSetWidgetProperty(responseScrollbar, xpProperty_ScrollBarSliderPosition, (int)command.get_response());
@@ -809,7 +885,39 @@ void Menu::visit(RotorCameraCommand & command)
 		});
 }
 
-void Menu::visit(GunCameraCommand&)
+void Menu::visit_multimonitor(bool multimonitorCompatibility)
 {
+	// Create the multimonitor compatibility menu
+	// Place it at the mBottom
+	// Set the subwindow top from main top minus level head height minus rotor height minus some padding
+	int y = mTop - 150 - 10 - 70 - 10;
+	int x1 = mRight - mWidth / 3 + 10;
+	int x2 = mRight - 20;
 
+	XPWidgetID subw = XPCreateWidget(x1, y, x2, y - 90, 1, "Compatibility", 0, mWidgetId, xpWidgetClass_SubWindow);
+	XPSetWidgetProperty(subw, xpProperty_SubWindowType, xpSubWindowStyle_SubWindow);
+
+	x1 += 10;
+	x2 -= 10;
+	y -= 10;
+
+	// Add the compatibility checkbox
+	XPWidgetID compatibilityButton = XPCreateWidget(x1, y, x1 + 10, y - 10, 1, " Enable multimonitor compatibility", 0, mWidgetId, xpWidgetClass_Button);
+	XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonType, xpRadioButton);
+	XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonBehavior, xpButtonBehaviorCheckBox);
+	XPSetWidgetProperty(compatibilityButton, xpProperty_ButtonState, multimonitorCompatibility);
+	XPAddWidgetCallback(compatibilityButton, [](XPWidgetMessage inMessage, XPWidgetID inWidget, intptr_t, intptr_t) -> int {
+		int inExit;
+		if (inMessage == xpMsg_ButtonStateChanged) {
+			Menu::mInstance->mCameraControl->set_multimonitor_compatibility(XPGetWidgetProperty(inWidget, xpProperty_ButtonState, &inExit));
+			return 1;
+		}
+		return 0;
+		});
+
+	y -= 20;
+	// Add the description
+	XPCreateWidget(x1, y, x1 + 10, y - 30, 1, "Enable this if you use more screens.", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1, y, x1 + 10, y - 60, 1, "This is for X-Plane versions before 11.02.", 0, mWidgetId, xpWidgetClass_Caption);
+	XPCreateWidget(x1, y, x1 + 10, y - 90, 1, "It has no effect on X-Plane 11.02+.", 0, mWidgetId, xpWidgetClass_Caption);
 }

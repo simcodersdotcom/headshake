@@ -16,10 +16,10 @@
 #include "cameracommands/lookaheadcameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
 #include "cameracommands/taxilookaheadcameracommand.h"
-#include "cameracommands/guncameracommand.h"
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
+#include "cameracommands/levelheadcameracommand.h"
 
 #define MSG_ADD_DATAREF 0x01000000
 
@@ -33,6 +33,7 @@ CameraControl* CameraControl::get_instance()
 
 CameraControl::CameraControl()
 {
+	XPLMGetVersions(&mXpVersion, nullptr, nullptr);
     // Instance the new commands
     mCommands.push_back(new GForceCameraCommand);
     mCommands.push_back(new LookAheadCameraCommand);
@@ -40,13 +41,12 @@ CameraControl::CameraControl()
     mCommands.push_back(new RotorCameraCommand);
     mCommands.push_back(new GroundRollCameraCommand);
     mCommands.push_back(new TaxiLookAheadCameraCommand);
-    mCommands.push_back(new GunCameraCommand);
     mCommands.push_back(new TouchdownCameraCommand);
+	mCommands.push_back(new LevelHeadCameraCommand);
     // Store the size in a private property
     // to make loops more efficient.
     // An iterator is not needed because the size of this vector
     // will stay the same until the plugin is stopped.
-	XPLMGetVersions(&mXpVersion, nullptr, nullptr);
     mCommandsSize = mCommands.size();
     mFreezed1 = false;
     mFreezed2 = false;
@@ -59,6 +59,7 @@ CameraControl::CameraControl()
     mLastJoyPitch = 0;
     mLastJoyYaw = 0;
     mCameraOffset.x = mCameraOffset.y = mCameraOffset.z = mCameraOffset.roll = mCameraOffset.pitch = mCameraOffset.yaw = 0;
+	// Set commands
     mEnabledCommand = XPLMCreateCommand("simcoders/headshake/toggle_headshake", "Enable/Disable HeadShake");
 	mGforceToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_gforce", "Enable/Disable g-force effects");
 	mLookAheadToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_lookahead", "Enable/Disable look ahead effects");
@@ -67,7 +68,7 @@ CameraControl::CameraControl()
 	mGroundRollToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_groundroll", "Enable/Disable ground roll vibrations");
 	mTaxiLookToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_taxilook", "Enable/Disable taxi lookahead");
 	mTouchdownToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_touchdown", "Enable/Disable touchdown effect");
-
+	mLevelHeadToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_levelhead", "Enable/Disable level head effect");
     // Fill the datarefs
     mCinemaVeriteDataRef = XPLMFindDataRef("sim/graphics/view/cinema_verite");
     mPausedDataRef = XPLMFindDataRef("sim/time/paused");
@@ -182,7 +183,7 @@ int CameraControl::freeze(XPLMCommandRef, XPLMCommandPhase, void*)
 }
 
 // Static private: command callback that toggle the system when requested
-int CameraControl::toggle_hs(XPLMCommandRef ref, XPLMCommandPhase inPhase, void*)
+int CameraControl::toggle_hs(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
 {
     if (inPhase == xplm_CommandBegin) CameraControl::mInstance->set_enabled(!CameraControl::mInstance->get_enabled());
 
@@ -226,6 +227,12 @@ int CameraControl::toggle_taxilook(XPLMCommandRef, XPLMCommandPhase inPhase, voi
 }
 
 int CameraControl::toggle_touchdown(XPLMCommandRef, XPLMCommandPhase inPhase,  void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(6)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_levelhead(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
 {
 	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(7)->toggle();
 	return 0;
@@ -354,6 +361,7 @@ void CameraControl::on_enable()
 	XPLMRegisterCommandHandler(mGroundRollToggleCommand, CameraControl::toggle_groundroll, true, 0);
 	XPLMRegisterCommandHandler(mTaxiLookToggleCommand, CameraControl::toggle_taxilook, true, 0);
 	XPLMRegisterCommandHandler(mTouchdownToggleCommand, CameraControl::toggle_touchdown, true, 0);
+	XPLMRegisterCommandHandler(mLevelHeadToggleCommand, CameraControl::toggle_levelhead, true, 0);
 }
 
 void CameraControl::on_disable()
@@ -382,7 +390,7 @@ void CameraControl::on_disable()
     for (unsigned int i = 0; i < mCommandsSize; i++) {
         mCommands.at(i)->on_disable();
     }
-    // Unregister the toggle command
+    // Unregister the toggle commands
     XPLMUnregisterCommandHandler(mEnabledCommand, CameraControl::toggle_hs, true, 0);
 	XPLMUnregisterCommandHandler(mGforceToggleCommand, CameraControl::toggle_gforce, true, 0);
 	XPLMUnregisterCommandHandler(mLookAheadToggleCommand, CameraControl::toggle_lookahead, true, 0);
@@ -391,6 +399,7 @@ void CameraControl::on_disable()
 	XPLMUnregisterCommandHandler(mGroundRollToggleCommand, CameraControl::toggle_groundroll, true, 0);
 	XPLMUnregisterCommandHandler(mTaxiLookToggleCommand, CameraControl::toggle_taxilook, true, 0);
 	XPLMUnregisterCommandHandler(mTouchdownToggleCommand, CameraControl::toggle_touchdown, true, 0);
+	XPLMUnregisterCommandHandler(mLevelHeadToggleCommand, CameraControl::toggle_levelhead, true, 0);
 }
 
 void CameraControl::reset_view()

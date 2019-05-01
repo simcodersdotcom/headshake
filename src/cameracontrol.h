@@ -45,6 +45,7 @@ private:
 	static int toggle_groundroll(XPLMCommandRef, XPLMCommandPhase, void*);
 	static int toggle_taxilook(XPLMCommandRef, XPLMCommandPhase, void*);
 	static int toggle_touchdown(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_levelhead(XPLMCommandRef, XPLMCommandPhase, void*);
 
     static CameraControl* mInstance;
     virtual ~CameraControl();
@@ -95,6 +96,7 @@ private:
 	XPLMCommandRef mGroundRollToggleCommand;
 	XPLMCommandRef mTaxiLookToggleCommand;
 	XPLMCommandRef mTouchdownToggleCommand;
+	XPLMCommandRef mLevelHeadToggleCommand;
     std::vector<XPLMCommandRef> mStopCommands;
     std::vector<XPLMDataRef> mDrefs;
     unsigned int mStopCommandsSize;

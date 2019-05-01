@@ -13,9 +13,9 @@
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
 #include "cameracommands/taxilookaheadcameracommand.h"
-#include "cameracommands/guncameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
+#include "cameracommands/levelheadcameracommand.h"
 #include "helpers.h"
 
 SettingsReader::SettingsReader()
@@ -107,15 +107,22 @@ void SettingsReader::visit(TouchdownCameraCommand &command)
         command.set_response(atof(mMap["cameracommand.touchdown.response"].c_str()));
 }
 
-void SettingsReader::visit(GunCameraCommand&)
-{
-
-}
-
 void SettingsReader::visit(RotorCameraCommand &command)
 {
-    if (mMap.find("cameracommand.rotor.enabled") != mMap.end())
-        command.set_enabled(mMap["cameracommand.rotor.enabled"].compare("1") == 0);
-    if (mMap.find("cameracommand.rotor.response") != mMap.end())
-        command.set_response(atof(mMap["cameracommand.rotor.response"].c_str()));
+	if (mMap.find("cameracommand.rotor.enabled") != mMap.end())
+		command.set_enabled(mMap["cameracommand.rotor.enabled"].compare("1") == 0);
+	if (mMap.find("cameracommand.rotor.response") != mMap.end())
+		command.set_response(atof(mMap["cameracommand.rotor.response"].c_str()));
+}
+
+void SettingsReader::visit(LevelHeadCameraCommand &command)
+{
+	if (mMap.find("cameracommand.levelhead.enabled") != mMap.end())
+		command.set_enabled(mMap["cameracommand.levelhead.enabled"].compare("1") == 0);
+
+	if (mMap.find("cameracommand.levelhead.response") != mMap.end())
+		command.set_response(atof(mMap["cameracommand.levelhead.response"].c_str()));
+
+	if (mMap.find("cameracommand.levelhead.maxbank") != mMap.end())
+		command.set_max_bank(atof(mMap["cameracommand.levelhead.maxbank"].c_str()));
 }
