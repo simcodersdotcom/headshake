@@ -16,10 +16,10 @@
 #include "cameracommands/lookaheadcameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
 #include "cameracommands/taxilookaheadcameracommand.h"
-#include "cameracommands/guncameracommand.h"
 #include "cameracommands/pistonenginecameracommand.h"
 #include "cameracommands/rotorcameracommand.h"
 #include "cameracommands/touchdowncameracommand.h"
+#include "cameracommands/levelheadcameracommand.h"
 
 #define MSG_ADD_DATAREF 0x01000000
 
@@ -33,6 +33,7 @@ CameraControl* CameraControl::get_instance()
 
 CameraControl::CameraControl()
 {
+	XPLMGetVersions(&mXpVersion, nullptr, nullptr);
     // Instance the new commands
     mCommands.push_back(new GForceCameraCommand);
     mCommands.push_back(new LookAheadCameraCommand);
@@ -40,8 +41,8 @@ CameraControl::CameraControl()
     mCommands.push_back(new RotorCameraCommand);
     mCommands.push_back(new GroundRollCameraCommand);
     mCommands.push_back(new TaxiLookAheadCameraCommand);
-    mCommands.push_back(new GunCameraCommand);
     mCommands.push_back(new TouchdownCameraCommand);
+	mCommands.push_back(new LevelHeadCameraCommand);
     // Store the size in a private property
     // to make loops more efficient.
     // An iterator is not needed because the size of this vector
@@ -58,14 +59,24 @@ CameraControl::CameraControl()
     mLastJoyPitch = 0;
     mLastJoyYaw = 0;
     mCameraOffset.x = mCameraOffset.y = mCameraOffset.z = mCameraOffset.roll = mCameraOffset.pitch = mCameraOffset.yaw = 0;
+	// Set commands
     mEnabledCommand = XPLMCreateCommand("simcoders/headshake/toggle_headshake", "Enable/Disable HeadShake");
+	mGforceToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_gforce", "Enable/Disable g-force effects");
+	mLookAheadToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_lookahead", "Enable/Disable look ahead effects");
+	mPistonVibToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_pistonvib", "Enable/Disable piston engine vibrations");
+	mRotorVibToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_rotorvib", "Enable/Disable rotor vibrations");
+	mGroundRollToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_groundroll", "Enable/Disable ground roll vibrations");
+	mTaxiLookToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_taxilook", "Enable/Disable taxi lookahead");
+	mTouchdownToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_touchdown", "Enable/Disable touchdown effect");
+	mLevelHeadToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_levelhead", "Enable/Disable level head effect");
     // Fill the datarefs
     mCinemaVeriteDataRef = XPLMFindDataRef("sim/graphics/view/cinema_verite");
     mPausedDataRef = XPLMFindDataRef("sim/time/paused");
     mViewTypeDataRef = XPLMFindDataRef("sim/graphics/view/view_type");
     mHeadHeadingDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_psi");
     mHeadPitchDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_the");
-    mHeadRollDataRef = XPLMFindDataRef("sim/graphics/view/field_of_view_roll_deg");
+	if(mXpVersion >= 1102) mHeadRollDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_phi");
+	else mHeadRollDataRef = XPLMFindDataRef("sim/graphics/view/field_of_view_roll_deg");
     mHeadXDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_x");
     mHeadYDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_y");
     mHeadZDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_z");
@@ -174,14 +185,79 @@ int CameraControl::freeze(XPLMCommandRef, XPLMCommandPhase, void*)
 // Static private: command callback that toggle the system when requested
 int CameraControl::toggle_hs(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
 {
-    if (inPhase == xplm_CommandBegin) {
-        CameraControl::mInstance->set_enabled(!CameraControl::mInstance->get_enabled());
-    }
+    if (inPhase == xplm_CommandBegin) CameraControl::mInstance->set_enabled(!CameraControl::mInstance->get_enabled());
+
     return 0;
+}
+
+int CameraControl::toggle_gforce(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(0)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_lookahead(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(1)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_pistonvib(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(2)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_rotorvib(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(3)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_groundroll(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(4)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_taxilook(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(5)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_touchdown(XPLMCommandRef, XPLMCommandPhase inPhase,  void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(6)->toggle();
+	return 0;
+}
+
+int CameraControl::toggle_levelhead(XPLMCommandRef, XPLMCommandPhase inPhase, void*)
+{
+	if (inPhase == xplm_CommandBegin) CameraControl::mInstance->mCommands.at(7)->toggle();
+	return 0;
 }
 
 void CameraControl::set_enabled(bool enabled)
 {
+	if (enabled) { 
+		mInitialPos.pitch = XPLMGetDataf(mHeadPitchDataRef);
+		mInitialPos.yaw = XPLMGetDataf(mHeadHeadingDataRef);
+		mInitialPos.roll = XPLMGetDataf(mHeadRollDataRef);
+		mInitialPos.x = XPLMGetDataf(mHeadXDataRef);
+		mInitialPos.y = XPLMGetDataf(mHeadYDataRef);
+		mInitialPos.z = XPLMGetDataf(mHeadZDataRef);
+		XPLMSpeakString("HeadShake is enabled"); 
+	}
+	else { 
+		XPLMSetDataf(mHeadPitchDataRef, mInitialPos.pitch);
+		XPLMSetDataf(mHeadHeadingDataRef, mInitialPos.yaw);
+		XPLMSetDataf(mHeadRollDataRef, mInitialPos.roll);
+		XPLMSetDataf(mHeadXDataRef, mInitialPos.x);
+		XPLMSetDataf(mHeadYDataRef, mInitialPos.y);
+		XPLMSetDataf(mHeadZDataRef, mInitialPos.z);
+		XPLMSpeakString("HeadShake is disabled");
+	}
     mEnabled = enabled;
 }
 
@@ -278,6 +354,14 @@ void CameraControl::on_enable()
 
     // Register the X-Plane commands
     XPLMRegisterCommandHandler(mEnabledCommand, CameraControl::toggle_hs, true, 0);
+	XPLMRegisterCommandHandler(mGforceToggleCommand, CameraControl::toggle_gforce, true, 0);
+	XPLMRegisterCommandHandler(mLookAheadToggleCommand, CameraControl::toggle_lookahead, true, 0);
+	XPLMRegisterCommandHandler(mPistonVibToggleCommand, CameraControl::toggle_pistonvib, true, 0);
+	XPLMRegisterCommandHandler(mRotorVibToggleCommand, CameraControl::toggle_rotorvib, true, 0);
+	XPLMRegisterCommandHandler(mGroundRollToggleCommand, CameraControl::toggle_groundroll, true, 0);
+	XPLMRegisterCommandHandler(mTaxiLookToggleCommand, CameraControl::toggle_taxilook, true, 0);
+	XPLMRegisterCommandHandler(mTouchdownToggleCommand, CameraControl::toggle_touchdown, true, 0);
+	XPLMRegisterCommandHandler(mLevelHeadToggleCommand, CameraControl::toggle_levelhead, true, 0);
 }
 
 void CameraControl::on_disable()
@@ -306,8 +390,28 @@ void CameraControl::on_disable()
     for (unsigned int i = 0; i < mCommandsSize; i++) {
         mCommands.at(i)->on_disable();
     }
-    // Unregister the toggle command
+    // Unregister the toggle commands
     XPLMUnregisterCommandHandler(mEnabledCommand, CameraControl::toggle_hs, true, 0);
+	XPLMUnregisterCommandHandler(mGforceToggleCommand, CameraControl::toggle_gforce, true, 0);
+	XPLMUnregisterCommandHandler(mLookAheadToggleCommand, CameraControl::toggle_lookahead, true, 0);
+	XPLMUnregisterCommandHandler(mPistonVibToggleCommand, CameraControl::toggle_pistonvib, true, 0);
+	XPLMUnregisterCommandHandler(mRotorVibToggleCommand, CameraControl::toggle_rotorvib, true, 0);
+	XPLMUnregisterCommandHandler(mGroundRollToggleCommand, CameraControl::toggle_groundroll, true, 0);
+	XPLMUnregisterCommandHandler(mTaxiLookToggleCommand, CameraControl::toggle_taxilook, true, 0);
+	XPLMUnregisterCommandHandler(mTouchdownToggleCommand, CameraControl::toggle_touchdown, true, 0);
+	XPLMUnregisterCommandHandler(mLevelHeadToggleCommand, CameraControl::toggle_levelhead, true, 0);
+}
+
+void CameraControl::reset_view()
+{
+	if (mPositionInited && !mOverride) {
+		XPLMSetDataf(mHeadPitchDataRef, mInitialPos.pitch);
+		XPLMSetDataf(mHeadHeadingDataRef, mInitialPos.yaw);
+		XPLMSetDataf(mHeadRollDataRef, mInitialPos.roll);
+		XPLMSetDataf(mHeadXDataRef, mInitialPos.x);
+		XPLMSetDataf(mHeadYDataRef, mInitialPos.y);
+		XPLMSetDataf(mHeadZDataRef, mInitialPos.z);
+	}
 }
 
 void CameraControl::freeze()
@@ -407,8 +511,10 @@ float CameraControl::control()
         XPLMSetDataf(mHeadPitchDataRef, std::max(std::min(currentPos.pitch, 89.0f), -89.0f)); // Limit the pitch to -89°/+89°
         XPLMSetDataf(mHeadHeadingDataRef, currentPos.yaw);
         // Do not write the roll if the multimonitor compatibility is turned on
-        if (!mMultimonitorCompatibility)
-            XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
+		if (mXpVersion < 1102) {
+			if (!mMultimonitorCompatibility)
+				XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
+		} else XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
         XPLMSetDataf(mHeadXDataRef, currentPos.x);
         XPLMSetDataf(mHeadYDataRef, currentPos.y);
         XPLMSetDataf(mHeadZDataRef, currentPos.z);
@@ -459,4 +565,9 @@ bool CameraControl::get_multimonitor_compatibility() const
 void CameraControl::set_multimonitor_compatibility(bool compatibility)
 {
     mMultimonitorCompatibility = compatibility;
+}
+
+int CameraControl::get_xp_version()
+{
+	return mXpVersion;
 }

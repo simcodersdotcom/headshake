@@ -13,6 +13,7 @@ class CameraCommand : public IVisitable
         virtual ~CameraCommand();
         virtual bool is_enabled();
         virtual void set_enabled(bool);
+		virtual void toggle();
         virtual void execute(CameraPosition&);
         virtual void accept(IVisitor&) = 0;
         virtual void on_view_changed(int);

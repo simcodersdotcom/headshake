@@ -24,8 +24,10 @@ public:
     bool error();
     CameraPosition get_offset();
     bool get_override() const;
+	int get_xp_version();
     void set_override(bool);
     void set_enabled(bool);
+	void reset_view();
     bool get_enabled() const;
 protected:
 private:
@@ -36,17 +38,26 @@ private:
 
     static int freeze(XPLMCommandRef, XPLMCommandPhase, void*);
     static int toggle_hs(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_gforce(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_lookahead(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_pistonvib(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_rotorvib(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_groundroll(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_taxilook(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_touchdown(XPLMCommandRef, XPLMCommandPhase, void*);
+	static int toggle_levelhead(XPLMCommandRef, XPLMCommandPhase, void*);
 
     static CameraControl* mInstance;
     virtual ~CameraControl();
     /** Implementation */
     void freeze();
-    std::vector<CameraCommand*> mCommands;
+	std::vector<CameraCommand*> mCommands;
     unsigned int mCommandsSize;
     CameraPosition mLastPos;
     CameraPosition mInitialPos;
     CameraPosition mCameraOffset;
     int mLastCameraType;
+	int mXpVersion;
     bool mPositionInited;
     bool mFreezed1;
     bool mFreezed2;
@@ -77,7 +88,15 @@ private:
     XPLMDataRef mJoyAxisValues;
     XPLMDataRef mJoyAxisAssignments;
     /** Commands */
-    XPLMCommandRef mEnabledCommand;
+	XPLMCommandRef mEnabledCommand;
+	XPLMCommandRef mGforceToggleCommand;
+	XPLMCommandRef mLookAheadToggleCommand;
+	XPLMCommandRef mPistonVibToggleCommand;
+	XPLMCommandRef mRotorVibToggleCommand;
+	XPLMCommandRef mGroundRollToggleCommand;
+	XPLMCommandRef mTaxiLookToggleCommand;
+	XPLMCommandRef mTouchdownToggleCommand;
+	XPLMCommandRef mLevelHeadToggleCommand;
     std::vector<XPLMCommandRef> mStopCommands;
     std::vector<XPLMDataRef> mDrefs;
     unsigned int mStopCommandsSize;
