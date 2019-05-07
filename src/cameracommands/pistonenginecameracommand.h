@@ -13,7 +13,7 @@ class PistonEngineCameraCommand : public CameraCommand
         PistonEngineCameraCommand();
         /** Default destructor */
         virtual ~PistonEngineCameraCommand();
-        void execute(CameraPosition&);
+        void execute(CameraPosition&, float) override;
         void accept(IVisitor&);
         void set_response(float response) { mResponse = response; }
         float get_response() { return mResponse; }

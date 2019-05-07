@@ -29,8 +29,10 @@ GroundRollCameraCommand::~GroundRollCameraCommand()
     //dtor
 }
 
-void GroundRollCameraCommand::execute(CameraPosition &position)
+void GroundRollCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     float acc, currentNormalG, currentSideG;
 
     // Restore the initial position

@@ -27,8 +27,10 @@ RotorCameraCommand::~RotorCameraCommand()
 
 }
 
-void RotorCameraCommand::execute(CameraPosition &position)
+void RotorCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     const double PI = 3.141592653589793238463;
     float rotorRpmOutVal[8], rotorAngleOutVal[8], numBladesOutVal[8], propMassOutVal[8];
     int propTypeOutVal[8], count = 0;

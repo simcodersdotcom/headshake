@@ -12,7 +12,7 @@ public:
 	LevelHeadCameraCommand();
 	/** Default destructor */
 	virtual ~LevelHeadCameraCommand();
-	void execute(CameraPosition&);
+	void execute(CameraPosition&, float) override;
 	void accept(IVisitor&);
 	void set_response(float response);
 	float get_response();

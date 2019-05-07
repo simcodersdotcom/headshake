@@ -15,7 +15,7 @@ class GForceCameraCommand : public CameraCommand
         GForceCameraCommand();
         /** Default destructor */
         virtual ~GForceCameraCommand();
-        void execute(CameraPosition&);
+        void execute(CameraPosition&, float) override;
         void accept(IVisitor&);
         /** Implementation methods */
         void set_pitch_response(float);

@@ -14,14 +14,17 @@ class CameraCommand : public IVisitable
         virtual bool is_enabled();
         virtual void set_enabled(bool);
 		virtual void toggle();
-        virtual void execute(CameraPosition&);
+        virtual void execute(CameraPosition&, float);
         virtual void accept(IVisitor&) = 0;
         virtual void on_view_changed(int);
         virtual void on_enable();
         virtual void on_disable();
+        void reset_blend();
     protected:
+        float get_blend_ratio() const;
         bool pEnabled;
     private:
+        float mBlendTime;
 };
 
 #endif // CAMERACOMMAND_H

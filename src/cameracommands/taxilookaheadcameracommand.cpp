@@ -31,8 +31,10 @@ TaxiLookAheadCameraCommand::~TaxiLookAheadCameraCommand()
     //dtor
 }
 
-void TaxiLookAheadCameraCommand::execute(CameraPosition &position)
+void TaxiLookAheadCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     (void)position;
 
     float blend, acc, lean, leanInput, rudderInput, turnInput, groundSpeedAcc, currentTurn, currentRudder, currentGroundSpeed;

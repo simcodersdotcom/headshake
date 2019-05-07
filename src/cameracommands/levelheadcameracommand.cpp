@@ -17,21 +17,39 @@ LevelHeadCameraCommand::~LevelHeadCameraCommand()
 {
 }
 
-void LevelHeadCameraCommand::execute(CameraPosition &position)
+void LevelHeadCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
-	float currentBank;
+	CameraCommand::execute(position, elapsedTime);
+
+	float currentBank, targetRoll;
 
 	position.roll += mLastRoll;
 
-	mLastRoll = 0;
-
-	if (!pEnabled) return;
+	if (!pEnabled) {
+		mLastRoll = 0;
+		return;
+	}
 
 	currentBank = XPLMGetDataf(mRollRef);
 
-	if (currentBank < 0) mLastRoll = (std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
-	else mLastRoll = (std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+	if (currentBank < 0) {
+		targetRoll = (std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+	} 
+	else {
+		targetRoll = (std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+	}
 
+	if (get_blend_ratio() < 1) {
+		if (mLastRoll > targetRoll) {
+			mLastRoll -= (mLastRoll - targetRoll) * get_blend_ratio();
+		}
+		else {
+			mLastRoll += (targetRoll - mLastRoll) * get_blend_ratio();
+		}
+	}
+	else {
+		mLastRoll = targetRoll;
+	}
 	position.roll -= mLastRoll;
 }
 

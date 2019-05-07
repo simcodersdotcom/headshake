@@ -12,7 +12,7 @@ class TouchdownCameraCommand : public CameraCommand
         TouchdownCameraCommand();
         /** Default destructor */
         virtual ~TouchdownCameraCommand();
-        void execute(CameraPosition&);
+        void execute(CameraPosition&, float) override;
         void accept(IVisitor&);
         /** Implementation methods */
         void set_response(float);

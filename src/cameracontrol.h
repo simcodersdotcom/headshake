@@ -15,7 +15,7 @@ class CameraControl : IVisitable
 {
 public:
     static CameraControl* get_instance();
-    float control();
+    float control(float);
     void accept(IVisitor&);
     void on_enable();
     void on_disable();
@@ -52,7 +52,6 @@ private:
     /** Implementation */
     void freeze();
 	std::vector<CameraCommand*> mCommands;
-    unsigned int mCommandsSize;
     CameraPosition mLastPos;
     CameraPosition mInitialPos;
     CameraPosition mCameraOffset;

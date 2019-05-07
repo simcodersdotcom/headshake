@@ -127,8 +127,10 @@ void PistonEngineCameraCommand::on_disable()
     XPLMUnregisterDataAccessor(mVibrationRatioDataref);
 }
 
-void PistonEngineCameraCommand::execute(CameraPosition &position)
+void PistonEngineCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     const double PI = 3.141592653589793238463;
     int engineTypeOutVal[8], engineNum;
     float engineRotationOutVal[8];

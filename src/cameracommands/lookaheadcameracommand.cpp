@@ -24,8 +24,10 @@ LookAheadCameraCommand::~LookAheadCameraCommand()
     //dtor
 }
 
-void LookAheadCameraCommand::execute(CameraPosition &position)
+void LookAheadCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     float acc, currentG;
 
     position.pitch -= mLastPitch;

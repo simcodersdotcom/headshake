@@ -71,8 +71,10 @@ void GForceCameraCommand::on_disable()
     XPLMUnregisterDataAccessor(mGeneralSensitivityDataRef);
 }
 
-void GForceCameraCommand::execute(CameraPosition &position)
+void GForceCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     const float maxAlt = 20, minAlt = 1; // Meters
     const unsigned int maxDamper = 30, minDamper = 5;
     float acc, currentG, aglAlt;

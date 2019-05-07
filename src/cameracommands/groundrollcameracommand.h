@@ -15,7 +15,7 @@ class GroundRollCameraCommand : public CameraCommand
         GroundRollCameraCommand();
         /** Default destructor */
         virtual ~GroundRollCameraCommand();
-        void execute(CameraPosition&);
+        void execute(CameraPosition&, float) override;
         void accept(IVisitor&);
         /** Implementation methods */
         void set_response(float);

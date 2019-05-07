@@ -15,7 +15,7 @@ class TaxiLookAheadCameraCommand : public CameraCommand
         TaxiLookAheadCameraCommand();
         /** Default destructor */
         virtual ~TaxiLookAheadCameraCommand();
-        void execute(CameraPosition&);
+        void execute(CameraPosition&, float) override;
         void accept(IVisitor&);
         /** Implementation methods */
         void set_rudder_response(float);

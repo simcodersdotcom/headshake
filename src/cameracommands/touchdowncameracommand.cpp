@@ -32,8 +32,10 @@ TouchdownCameraCommand::~TouchdownCameraCommand()
     //dtor
 }
 
-void TouchdownCameraCommand::execute(CameraPosition &position)
+void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime)
 {
+    CameraCommand::execute(position, elapsedTime);
+    
     float currentTime, touchdownshake, fastshake;
     const double PI = 3.141592653589793238463;
 

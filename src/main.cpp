@@ -80,10 +80,10 @@ PLUGIN_API void XPluginReceiveMessage(
 }
 
 float FlightLoopCallback(
-    float, // Time since the last call
+    float elapsedTime, // Time since the last call
     float, // Time since the last loop
     int, // Loop counter
     void*)
 {
-    return CameraControl::get_instance()->control();
+    return CameraControl::get_instance()->control(elapsedTime);
 }

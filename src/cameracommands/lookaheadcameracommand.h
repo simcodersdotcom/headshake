@@ -11,7 +11,7 @@ class LookAheadCameraCommand : public CameraCommand
     public:
         /** Default constructor */
         LookAheadCameraCommand();
-        void execute(CameraPosition&);
+        void execute(CameraPosition&, float) override;
         void accept(IVisitor&);
         /** Default destructor */
         virtual ~LookAheadCameraCommand();

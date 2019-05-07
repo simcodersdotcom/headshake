@@ -43,11 +43,6 @@ CameraControl::CameraControl()
     mCommands.push_back(new TaxiLookAheadCameraCommand);
     mCommands.push_back(new TouchdownCameraCommand);
 	mCommands.push_back(new LevelHeadCameraCommand);
-    // Store the size in a private property
-    // to make loops more efficient.
-    // An iterator is not needed because the size of this vector
-    // will stay the same until the plugin is stopped.
-    mCommandsSize = mCommands.size();
     mFreezed1 = false;
     mFreezed2 = false;
     mError = false;
@@ -165,10 +160,8 @@ CameraControl::CameraControl()
 CameraControl::~CameraControl()
 {
     // Delete the commands and free the memory
-    for (unsigned int i = 0; i < mCommandsSize; i++) {
-        if (mCommands.at(i) != NULL) {
-            delete mCommands.at(i);
-        }
+    for (auto command : mCommands) {
+        delete command;
     }
     mCommands.clear();
     // Delete the stopcommands and free the memory
@@ -348,8 +341,8 @@ void CameraControl::on_enable()
     }
 
     // Send the on_enable to the commands
-    for (unsigned int i = 0; i < mCommandsSize; i++) {
-        mCommands.at(i)->on_enable();
+    for (auto command : mCommands) {
+        command->on_enable();
     }
 
     // Register the X-Plane commands
@@ -387,8 +380,8 @@ void CameraControl::on_disable()
         }
     }
     // Send the on_enable to the commands
-    for (unsigned int i = 0; i < mCommandsSize; i++) {
-        mCommands.at(i)->on_disable();
+    for (auto command : mCommands) {
+        command->on_disable();
     }
     // Unregister the toggle commands
     XPLMUnregisterCommandHandler(mEnabledCommand, CameraControl::toggle_hs, true, 0);
@@ -421,7 +414,7 @@ void CameraControl::freeze()
 }
 
 // Control the camera calling all the active modules
-float CameraControl::control()
+float CameraControl::control(float elapsedTime)
 {
     if (!mEnabled) {
         return 1;
@@ -433,8 +426,8 @@ float CameraControl::control()
     // If the camera type is changed, notify the objects passing the new camera type
     if (cameraType != mLastCameraType) {
         mLastCameraType = cameraType;
-        for (unsigned int i = 0; i < mCommandsSize; i++) {
-            mCommands.at(i)->on_view_changed(cameraType);
+        for (auto command : mCommands) {
+            command->on_view_changed(cameraType);
         }
     }
     // Make sure that we're in the virtual cockpit, cinema verite is not active and the sim is not paused
@@ -442,15 +435,6 @@ float CameraControl::control()
     if (cameraType != 1026 || XPLMGetDatai(mPausedDataRef) || mError) {
         return 1;
     }
-
-    // At first I tought to use two private methods:
-    // - CameraPosition get_camera_position()
-    // - void set_camera_position(CameraPosition currentPos)
-    //
-    // That's really inefficient because:
-    // - those functions were called only once and only here
-    // - every time this method is called (and it's called in a virtually infinite loop)
-    //   calling those methods would swap the current scope
 
     // If not overridden, read the current camera position
     if (!mOverride) {
@@ -475,11 +459,17 @@ float CameraControl::control()
             mFreezed2 = false;
         mFreezed1 = false;
         mLastPos = currentPos;
+
+
+        for (auto command : mCommands) {
+            command->reset_blend();
+        }
+
         return -2;
     }
 
-    for (unsigned int i = 0; i < mCommandsSize; i++) {
-        mCommands.at(i)->execute(calculatedPos);
+    for (auto command : mCommands) {
+        command->execute(calculatedPos, elapsedTime);
     }
 
     // If not overridden, update the camera position
@@ -511,10 +501,10 @@ float CameraControl::control()
         XPLMSetDataf(mHeadPitchDataRef, std::max(std::min(currentPos.pitch, 89.0f), -89.0f)); // Limit the pitch to -89°/+89°
         XPLMSetDataf(mHeadHeadingDataRef, currentPos.yaw);
         // Do not write the roll if the multimonitor compatibility is turned on
-		if (mXpVersion < 1102) {
-			if (!mMultimonitorCompatibility)
-				XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
-		} else XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
+        if (mXpVersion < 1102) {
+            if (!mMultimonitorCompatibility)
+                XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
+        } else XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
         XPLMSetDataf(mHeadXDataRef, currentPos.x);
         XPLMSetDataf(mHeadYDataRef, currentPos.y);
         XPLMSetDataf(mHeadZDataRef, currentPos.z);
@@ -548,8 +538,9 @@ bool CameraControl::get_override() const
 void CameraControl::accept(IVisitor &visitor)
 {
     visitor.visit(*this);
-    for (unsigned int i = 0; i < mCommandsSize; i++)
-        mCommands.at(i)->accept(visitor);
+    for (auto command : mCommands) {
+        command->accept(visitor);
+    }
 }
 
 bool CameraControl::error()
