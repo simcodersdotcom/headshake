@@ -240,7 +240,6 @@ void CameraControl::set_enabled(bool enabled)
 		mInitialPos.x = XPLMGetDataf(mHeadXDataRef);
 		mInitialPos.y = XPLMGetDataf(mHeadYDataRef);
 		mInitialPos.z = XPLMGetDataf(mHeadZDataRef);
-		XPLMSpeakString("HeadShake is enabled"); 
 	}
 	else { 
 		XPLMSetDataf(mHeadPitchDataRef, mInitialPos.pitch);
@@ -249,7 +248,6 @@ void CameraControl::set_enabled(bool enabled)
 		XPLMSetDataf(mHeadXDataRef, mInitialPos.x);
 		XPLMSetDataf(mHeadYDataRef, mInitialPos.y);
 		XPLMSetDataf(mHeadZDataRef, mInitialPos.z);
-		XPLMSpeakString("HeadShake is disabled");
 	}
     mEnabled = enabled;
 }
