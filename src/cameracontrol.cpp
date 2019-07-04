@@ -64,6 +64,7 @@ CameraControl::CameraControl()
 	mTaxiLookToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_taxilook", "Enable/Disable taxi lookahead");
 	mTouchdownToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_touchdown", "Enable/Disable touchdown effect");
 	mLevelHeadToggleCommand = XPLMCreateCommand("simcoders/headshake/toggle_levelhead", "Enable/Disable level head effect");
+    mStopCommand = XPLMCreateCommand("simcoders/headshake/stop", "Stop HeadShake. It will restart once the view is not controlled anymore by another plugin.");
     // Fill the datarefs
     mCinemaVeriteDataRef = XPLMFindDataRef("sim/graphics/view/cinema_verite");
     mPausedDataRef = XPLMFindDataRef("sim/time/paused");
@@ -79,6 +80,7 @@ CameraControl::CameraControl()
     mJoyAxisValues = XPLMFindDataRef("sim/joystick/joystick_axis_values");
     // Fill the commands
     // These are the commands that stop the plugin for a while when called
+    mStopCommands.push_back(mStopCommand);
     mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_0"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_1"));
     mStopCommands.push_back(XPLMFindCommand("sim/view/quick_look_2"));

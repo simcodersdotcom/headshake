@@ -88,6 +88,7 @@ private:
     XPLMDataRef mJoyAxisAssignments;
     /** Commands */
 	XPLMCommandRef mEnabledCommand;
+    XPLMCommandRef mStopCommand;
 	XPLMCommandRef mGforceToggleCommand;
 	XPLMCommandRef mLookAheadToggleCommand;
 	XPLMCommandRef mPistonVibToggleCommand;
