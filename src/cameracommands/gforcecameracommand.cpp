@@ -139,7 +139,7 @@ void GForceCameraCommand::execute(CameraPosition &position, float elapsedTime)
 
     // Roll
     // (works like the heading but with a different response)
-    if (acc < 0.005 || acc > 0.005) {
+    if (acc < -0.005 || acc > 0.005) {
         mLastRoll -= (acc * mYawResponse * mGeneralSensitivity / 5);
         position.roll += mLastRoll;
     } else {
