@@ -86,15 +86,15 @@ void PistonEngineCameraCommand::on_enable()
         }, [](void *refCon, float *inValues, int inOffset, int inMax) -> void {
             if (inValues != NULL) {
                 if (refCon) {
-                    for (int i = inOffset; (i < 8) && (i < inOffset+inMax); i++) {
-                        reinterpret_cast<PistonEngineCameraCommand*>(refCon)->mOverrideVibrationRatio[i] = inValues[i];
+                    for (int i = 0; (i + inOffset < 8) && i < inMax; i++) {
+                        reinterpret_cast<PistonEngineCameraCommand*>(refCon)->mOverrideVibrationRatio[inOffset + i] = inValues[i];
                     }
                 }
             }
         }, NULL, NULL, this, this);
         XPLMSendMessageToPlugin(datarefEditorId, MSG_ADD_DATAREF, (void*)"simcoders/headshake/pistonengine/vibration_ratio");
 
-    mVibrationRatioDataref = XPLMRegisterDataAccessor(
+    mVibrationFreqDataref = XPLMRegisterDataAccessor(
         "simcoders/headshake/pistonengine/vibration_freq", xplmType_FloatArray, 1,
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
         [](void *refCon, float *outValues, int inOffset, int inMax) -> int {
@@ -112,8 +112,8 @@ void PistonEngineCameraCommand::on_enable()
         }, [](void *refCon, float *inValues, int inOffset, int inMax) -> void {
             if (inValues != NULL) {
                 if (refCon) {
-                    for (int i = inOffset; (i < 8) && (i < inOffset+inMax); i++) {
-                        reinterpret_cast<PistonEngineCameraCommand*>(refCon)->mOverrideVibrationFreq[i] = inValues[i];
+                    for (int i = 0; (i + inOffset < 8) && i < inMax; i++) {
+                        reinterpret_cast<PistonEngineCameraCommand*>(refCon)->mOverrideVibrationFreq[inOffset + i] = inValues[i];
                     }
                 }
             }
@@ -125,6 +125,7 @@ void PistonEngineCameraCommand::on_disable()
 {
     XPLMUnregisterDataAccessor(mOverrideDataref);
     XPLMUnregisterDataAccessor(mVibrationRatioDataref);
+    XPLMUnregisterDataAccessor(mVibrationFreqDataref);
 }
 
 void PistonEngineCameraCommand::execute(CameraPosition &position, float elapsedTime)
