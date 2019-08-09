@@ -18,6 +18,9 @@ public:
 	float get_response();
 	void set_max_bank(float maxBank);
 	float get_max_bank();
+        virtual void on_view_changed(int);
+        virtual float get_last_roll();
+        virtual void reset_last_roll();
 protected:
 private:
 	float mLastRoll;

@@ -97,8 +97,8 @@ void TaxiLookAheadCameraCommand::execute(CameraPosition &position, float elapsed
     // Cache y, z, yaw & roll
     mLastY         = lean * 0.25f;
     mLastZ         = -lean;
-    mLastYaw       = acc;
-    mLastRoll      = acc * 0.125f;
+    mLastYaw       = quantize(acc);
+    mLastRoll      = quantize(acc * 0.125f);
 
     position.y    += mLastY;
     position.z    += mLastZ;
@@ -139,4 +139,23 @@ void TaxiLookAheadCameraCommand::set_lean_response(float response)
 float TaxiLookAheadCameraCommand::get_lean_response() const
 {
     return mLeanResponse;
+}
+
+float TaxiLookAheadCameraCommand::get_last_roll()
+{
+  return mLastRoll;
+}
+
+void TaxiLookAheadCameraCommand::reset_last_roll()
+{
+    mLastRoll = 0.0f;
+}
+
+// Executed when the view type changes
+void TaxiLookAheadCameraCommand::on_view_changed(int viewCode)
+{
+    // If the user enters the virtualcokpit, reset the data
+    if (viewCode == 1026) {
+      this->reset_last_roll();
+    }
 }
