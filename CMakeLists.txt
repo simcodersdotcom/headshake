@@ -90,7 +90,7 @@ if (CMP_MAC)
 	# --------------------
 	add_library(MAC_RELEASE_64 SHARED ${SOURCES})
 
-        target_compile_options(MAC_RELEASE_64 PRIVATE ${GCC_DEFAULT_FLAGS} -arch x86_64 -Wno-inconsistent-missing-override -DXPLM200 -DAPL)
+	target_compile_options(MAC_RELEASE_64 PRIVATE ${GCC_DEFAULT_FLAGS} -arch x86_64 -nostdinc++ -I/Library/Developer/CommandLineTools/usr/include/c++/v1 -DXPLM200 -DAPL)
 	target_link_libraries(MAC_RELEASE_64 "-F${SDK_PATH}/Libraries/Mac" "-framework XPLM" "-framework XPWidgets" "-framework OpenGL" "-nodefaultlibs" "-lc++" "-lc++abi" "-lm" "-lc")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES LINK_FLAGS "-m64 -fvisibility=hidden")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Release/HeadShake/64/")
