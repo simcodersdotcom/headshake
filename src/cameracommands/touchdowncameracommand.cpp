@@ -78,8 +78,8 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
             touchdownshake = (mVspeed * mResponse / 100.0f) * (std::sin(currentTime * PI * 7.0f) / (currentTime * 50.0f));
             fastshake = (mVspeed * mResponse / 100.0f) * (std::sin(currentTime * 50.0f) / (currentTime * 50.0f));
             mLastX = fastshake * 0.01f;
-            mLastRoll = fastshake * 15.0f;
-            mLastPitch = touchdownshake * 20.0f;
+            mLastRoll = quantize(fastshake * 15.0f);
+            mLastPitch = quantize(touchdownshake * 20.0f);
         }
     }
     position.pitch += mLastPitch;
@@ -100,4 +100,23 @@ void TouchdownCameraCommand::set_response(float response)
 float TouchdownCameraCommand::get_response()
 {
     return mResponse;
+}
+
+float TouchdownCameraCommand::get_last_roll()
+{
+  return mLastRoll;
+}
+
+void TouchdownCameraCommand::reset_last_roll()
+{
+    mLastRoll = 0.0f;
+}
+
+// Executed when the view type changes
+void TouchdownCameraCommand::on_view_changed(int viewCode)
+{
+    // If the user enters the virtualcokpit, reset the data
+    if (viewCode == 1026) {
+      this->reset_last_roll();
+    }
 }
