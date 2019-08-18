@@ -33,10 +33,20 @@ void LevelHeadCameraCommand::execute(CameraPosition &position, float elapsedTime
 	currentBank = XPLMGetDataf(mRollRef);
 
 	if (currentBank < 0) {
-                targetRoll = quantize((std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f));
+                if (currentBank < -90.0f) {
+                        targetRoll = quantize(-mMaxBankAngle * (1.0 - ((-currentBank - 90.0f) / 90.0f)) * (mResponse / 100.0f));
+                }
+                else {
+                        targetRoll = quantize((std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f));
+                }
 	} 
 	else {
-                targetRoll = quantize((std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f));
+                if (currentBank > 90.0f) {
+                        targetRoll = quantize(mMaxBankAngle * (1.0 - ((currentBank - 90.0f) / 90.0f)) * (mResponse / 100.0f));
+                }
+                else {
+                        targetRoll = quantize((std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f));
+                }
 	}
 
 	if (get_blend_ratio() < 1) {
