@@ -469,6 +469,14 @@ float CameraControl::control(float elapsedTime)
         return -1;
     }
 
+    calculatedPos.roll -= this->compensate_for_head_roll_drift(currentPos);
+        
+    for (auto command : mCommands) {
+        command->execute(calculatedPos, elapsedTime);
+    }
+
+    calculatedPos.normalize();
+
     // If not overridden, update the camera position
     if (!mOverride) {
         // Detect the joystick axis used for camera movements
@@ -493,20 +501,11 @@ float CameraControl::control(float elapsedTime)
         mLastJoyPitch = pitchValue;
         mLastJoyYaw = yawValue;
 
-        calculatedPos.roll -= this->compensate_for_head_roll_drift(currentPos);
-        
-        for (auto command : mCommands) {
-          command->execute(calculatedPos, elapsedTime);
-        }
-
-        calculatedPos.normalize();
-
         currentPos = currentPos + calculatedPos;
         // Set the current camera position
-        if ((mXpVersion >= 1102) || (!mMultimonitorCompatibility))
-          {
+        if ((mXpVersion >= 1102) || (!mMultimonitorCompatibility)) {
             XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
-          }
+        }
         XPLMSetDataf(mHeadPitchDataRef, std::max(std::min(currentPos.pitch, 89.0f), -89.0f)); // Limit the pitch to -89°/+89°
         XPLMSetDataf(mHeadHeadingDataRef, currentPos.yaw);
         XPLMSetDataf(mHeadXDataRef, currentPos.x);
@@ -576,7 +575,7 @@ float CameraControl::compensate_for_head_roll_drift(CameraPosition &currentPos)
   // a while.  Here we try to compensate by getting rid of whatever
   // random offset X-Plane is arbitrarily adding in.
   //
-  if ((!mOverride) && ((mXpVersion >= 1102) || (!mMultimonitorCompatibility)))
+  if (((mXpVersion >= 1102) || (!mMultimonitorCompatibility)))
     {
       float totalCmdRoll = 0.0f;
       
