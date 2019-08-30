@@ -575,7 +575,7 @@ float CameraControl::compensate_for_head_roll_drift(CameraPosition &currentPos)
   // a while.  Here we try to compensate by getting rid of whatever
   // random offset X-Plane is arbitrarily adding in.
   //
-  if (((mXpVersion >= 1102) || (!mMultimonitorCompatibility)))
+  if ((!mOverride) && ((mXpVersion >= 1102) || (!mMultimonitorCompatibility)))
     {
       float totalCmdRoll = 0.0f;
       
