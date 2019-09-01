@@ -98,3 +98,8 @@ float GroundRollCameraCommand::get_response()
 {
     return mResponse;
 }
+
+float GroundRollCameraCommand::get_last_roll()
+{
+  return mLastRoll;
+}

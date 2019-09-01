@@ -20,6 +20,7 @@ class CameraCommand : public IVisitable
         virtual void on_enable();
         virtual void on_disable();
         void reset_blend();
+        virtual float get_last_roll();
     protected:
         float get_blend_ratio() const;
         bool pEnabled;

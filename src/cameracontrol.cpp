@@ -468,6 +468,8 @@ float CameraControl::control(float elapsedTime)
         return -2;
     }
 
+    calculatedPos.roll -= this->compensate_for_head_roll_drift(currentPos);
+    
     for (auto command : mCommands) {
         command->execute(calculatedPos, elapsedTime);
     }
@@ -561,4 +563,67 @@ void CameraControl::set_multimonitor_compatibility(bool compatibility)
 int CameraControl::get_xp_version()
 {
 	return mXpVersion;
+}
+
+float CameraControl::compensate_for_head_roll_drift(CameraPosition &currentPos)
+{
+  float result = 0.0f;
+  
+  //
+  // Head roll has a nasty habit of tilting sideways after flying for
+  // a while.  Here we try to compensate by getting rid of whatever
+  // random offset X-Plane is arbitrarily adding in.
+  //
+  if ((!mOverride) && ((mXpVersion >= 1102) || (!mMultimonitorCompatibility)))
+    {
+      float totalCmdRoll = 0.0f;
+      
+      for (auto command : mCommands)
+        {
+          totalCmdRoll -= command->get_last_roll();
+        }
+      
+      result = currentPos.roll - totalCmdRoll;
+
+#if 0
+      static double   sDriftRollSum = 0;
+      static unsigned sDriftRollCnt = 0;
+      static double   sDriftMin     = 0;
+      static double   sDriftMax     = 0;
+      static unsigned sNoDriftCnt   = 0;
+
+      if (result == 0.0f)
+        {
+          sNoDriftCnt++;
+        }
+
+      sDriftRollSum += result;
+      sDriftRollCnt++;
+
+      if (result < sDriftMin)
+        {
+          sDriftMin = result;
+        }
+      else if (result > sDriftMax)
+        {
+          sDriftMax = result;
+        }
+      
+      if (sDriftRollCnt > 1000)
+        {
+          char temp[256];
+          snprintf(temp, sizeof(temp), "Headshake roll drift: %.8lf avg, min: %.8lf, max: %.8lf, no-drift-cnt: %u\n",
+                   sDriftRollSum / (double) sDriftRollCnt, sDriftMin, sDriftMax, sNoDriftCnt);
+          XPLMDebugString(temp);
+          sDriftRollSum = 0;
+          sDriftRollCnt = 0;
+          sDriftMin = 0;
+          sDriftMax = 0;
+          sNoDriftCnt = 0;
+        }
+#endif
+      
+    }
+
+  return result;
 }

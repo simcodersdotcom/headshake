@@ -17,6 +17,7 @@ class TouchdownCameraCommand : public CameraCommand
         /** Implementation methods */
         void set_response(float);
         float get_response();
+        virtual float get_last_roll();
     protected:
     private:
         bool mPrevOnGround;

@@ -140,3 +140,8 @@ float TaxiLookAheadCameraCommand::get_lean_response() const
 {
     return mLeanResponse;
 }
+
+float TaxiLookAheadCameraCommand::get_last_roll()
+{
+  return mLastRoll;
+}

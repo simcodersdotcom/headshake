@@ -101,3 +101,8 @@ float TouchdownCameraCommand::get_response()
 {
     return mResponse;
 }
+
+float TouchdownCameraCommand::get_last_roll()
+{
+  return mLastRoll;
+}

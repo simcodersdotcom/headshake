@@ -20,6 +20,7 @@ class GroundRollCameraCommand : public CameraCommand
         /** Implementation methods */
         void set_response(float);
         float get_response();
+        virtual float get_last_roll();
     protected:
     private:
         std::vector<float> mPitchFilter;

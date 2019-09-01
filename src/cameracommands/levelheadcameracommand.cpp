@@ -33,10 +33,20 @@ void LevelHeadCameraCommand::execute(CameraPosition &position, float elapsedTime
 	currentBank = XPLMGetDataf(mRollRef);
 
 	if (currentBank < 0) {
-		targetRoll = (std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+                if (currentBank < -90.0f) {
+                        targetRoll = -mMaxBankAngle * (1.0 - ((-currentBank - 90.0f) / 90.0f)) * (mResponse / 100.0f);
+                }
+                else {
+                        targetRoll = (std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+                }
 	} 
 	else {
-		targetRoll = (std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+                if (currentBank > 90.0f) {
+                        targetRoll = mMaxBankAngle * (1.0 - ((currentBank - 90.0f) / 90.0f)) * (mResponse / 100.0f);
+                }
+                else {
+                        targetRoll = (std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
+                }
 	}
 
 	if (get_blend_ratio() < 1) {
@@ -76,4 +86,9 @@ void LevelHeadCameraCommand::set_max_bank(float maxBank)
 float LevelHeadCameraCommand::get_max_bank()
 {
 	return mMaxBankAngle;
+}
+
+float LevelHeadCameraCommand::get_last_roll()
+{
+  return mLastRoll;
 }

@@ -60,3 +60,8 @@ float CameraCommand::get_blend_ratio() const
 {
     return mBlendTime / 2;
 }
+
+float CameraCommand::get_last_roll()
+{
+  return 0.0f;
+}

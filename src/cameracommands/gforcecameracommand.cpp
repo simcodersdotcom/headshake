@@ -200,3 +200,8 @@ float GForceCameraCommand::get_yaw_response()
 {
     return mYawResponse;
 }
+
+float GForceCameraCommand::get_last_roll()
+{
+  return mLastRoll;
+}

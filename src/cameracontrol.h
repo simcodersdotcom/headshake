@@ -100,6 +100,8 @@ private:
     std::vector<XPLMCommandRef> mStopCommands;
     std::vector<XPLMDataRef> mDrefs;
     unsigned int mStopCommandsSize;
+
+    float compensate_for_head_roll_drift(CameraPosition &currentPos);
 };
 
 #endif // CAMERACONTROL_H
