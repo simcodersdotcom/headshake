@@ -71,6 +71,9 @@ private:
     XPLMDataRef mXDataRef;
     XPLMDataRef mYDataRef;
     XPLMDataRef mZDataRef;
+    XPLMDataRef mYawDataRef;
+    XPLMDataRef mPitchDataRef;
+    XPLMDataRef mRollDataRef;
     /** DataRefs */
     XPLMDataRef mPausedDataRef;
     XPLMDataRef mCinemaVeriteDataRef;
@@ -97,8 +100,6 @@ private:
     std::vector<XPLMCommandRef> mStopCommands;
     std::vector<XPLMDataRef> mDrefs;
     unsigned int mStopCommandsSize;
-
-    float compensate_for_head_roll_drift(CameraPosition &currentPos);
 };
 
 #endif // CAMERACONTROL_H

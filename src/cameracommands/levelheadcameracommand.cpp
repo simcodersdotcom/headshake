@@ -33,28 +33,18 @@ void LevelHeadCameraCommand::execute(CameraPosition &position, float elapsedTime
 	currentBank = XPLMGetDataf(mRollRef);
 
 	if (currentBank < 0) {
-                if (currentBank < -90.0f) {
-                        targetRoll = quantize(-mMaxBankAngle * (1.0 - ((-currentBank - 90.0f) / 90.0f)) * (mResponse / 100.0f));
-                }
-                else {
-                        targetRoll = quantize((std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f));
-                }
+		targetRoll = (std::max(-mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
 	} 
 	else {
-                if (currentBank > 90.0f) {
-                        targetRoll = quantize(mMaxBankAngle * (1.0 - ((currentBank - 90.0f) / 90.0f)) * (mResponse / 100.0f));
-                }
-                else {
-                        targetRoll = quantize((std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f));
-                }
+		targetRoll = (std::min(mMaxBankAngle, currentBank)) * (mResponse / 100.0f);
 	}
 
 	if (get_blend_ratio() < 1) {
 		if (mLastRoll > targetRoll) {
-                        mLastRoll -= quantize((mLastRoll - targetRoll) * get_blend_ratio());
+			mLastRoll -= (mLastRoll - targetRoll) * get_blend_ratio();
 		}
 		else {
-                        mLastRoll += quantize((targetRoll - mLastRoll) * get_blend_ratio());
+			mLastRoll += (targetRoll - mLastRoll) * get_blend_ratio();
 		}
 	}
 	else {
@@ -86,23 +76,4 @@ void LevelHeadCameraCommand::set_max_bank(float maxBank)
 float LevelHeadCameraCommand::get_max_bank()
 {
 	return mMaxBankAngle;
-}
-
-float LevelHeadCameraCommand::get_last_roll()
-{
-  return mLastRoll;
-}
-
-void LevelHeadCameraCommand::reset_last_roll()
-{
-    mLastRoll = 0.0f;
-}
-
-// Executed when the view type changes
-void LevelHeadCameraCommand::on_view_changed(int viewCode)
-{
-    // If the user enters the virtualcokpit, reset the data
-    if (viewCode == 1026) {
-      this->reset_last_roll();
-    }
 }

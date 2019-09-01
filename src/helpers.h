@@ -1,8 +1,6 @@
 #ifndef MHELPERS_H
 #define MHELPERS_H
 
-#define FRAC_BIT_RES  12
-
 /*
 File: helpers.h
 
@@ -30,11 +28,5 @@ float weighted_average(const std::vector<float> &v);
 Get the settings file path
 */
 bool get_settings_filepath(char *path);
-
-inline float quantize(float val)
-{
-  static const float factor = (float) (1<<FRAC_BIT_RES);
-  return (float) ((int) (val * factor)) / factor;
-}
 
 #endif // HELPERS_H

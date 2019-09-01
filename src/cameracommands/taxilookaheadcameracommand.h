@@ -24,9 +24,6 @@ class TaxiLookAheadCameraCommand : public CameraCommand
         float get_turn_response() const;
         void set_lean_response(float);
         float get_lean_response() const;
-        virtual void on_view_changed(int);
-        virtual float get_last_roll();
-        virtual void reset_last_roll();
     protected:
     private:
         std::vector<float> mRudderFilter;

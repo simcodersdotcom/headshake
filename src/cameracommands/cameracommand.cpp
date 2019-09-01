@@ -56,16 +56,6 @@ void CameraCommand::on_disable()
 
 }
 
-float CameraCommand::get_last_roll()
-{
-  return 0.0f;
-}
-
-void CameraCommand::reset_last_roll()
-{
-
-}
-
 float CameraCommand::get_blend_ratio() const
 {
     return mBlendTime / 2;

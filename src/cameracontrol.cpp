@@ -12,7 +12,6 @@
 #include "cameracontrol.h"
 #include "cameraposition.h"
 #include "interfaces/ivisitor.h"
-#include "helpers.h"
 #include "cameracommands/gforcecameracommand.h"
 #include "cameracommands/lookaheadcameracommand.h"
 #include "cameracommands/groundrollcameracommand.h"
@@ -434,14 +433,14 @@ float CameraControl::control(float elapsedTime)
     // Make sure that we're in the virtual cockpit, cinema verite is not active and the sim is not paused
     mError = XPLMGetDatai(mCinemaVeriteDataRef) > 0;
     if (cameraType != 1026 || XPLMGetDatai(mPausedDataRef) || mError) {
-      return -1;
+        return 1;
     }
 
     // If not overridden, read the current camera position
     if (!mOverride) {
-        currentPos.pitch = quantize(XPLMGetDataf(mHeadPitchDataRef));
-        currentPos.yaw = quantize(XPLMGetDataf(mHeadHeadingDataRef));
-        currentPos.roll = quantize(XPLMGetDataf(mHeadRollDataRef));
+        currentPos.pitch = XPLMGetDataf(mHeadPitchDataRef);
+        currentPos.yaw = XPLMGetDataf(mHeadHeadingDataRef);
+        currentPos.roll = XPLMGetDataf(mHeadRollDataRef);
         currentPos.x = XPLMGetDataf(mHeadXDataRef);
         currentPos.y = XPLMGetDataf(mHeadYDataRef);
         currentPos.z = XPLMGetDataf(mHeadZDataRef);
@@ -466,16 +465,12 @@ float CameraControl::control(float elapsedTime)
             command->reset_blend();
         }
 
-        return -1;
+        return -2;
     }
 
-    calculatedPos.roll -= this->compensate_for_head_roll_drift(currentPos);
-        
     for (auto command : mCommands) {
         command->execute(calculatedPos, elapsedTime);
     }
-
-    calculatedPos.normalize();
 
     // If not overridden, update the camera position
     if (!mOverride) {
@@ -503,11 +498,13 @@ float CameraControl::control(float elapsedTime)
 
         currentPos = currentPos + calculatedPos;
         // Set the current camera position
-        if ((mXpVersion >= 1102) || (!mMultimonitorCompatibility)) {
-            XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
-        }
         XPLMSetDataf(mHeadPitchDataRef, std::max(std::min(currentPos.pitch, 89.0f), -89.0f)); // Limit the pitch to -89°/+89°
         XPLMSetDataf(mHeadHeadingDataRef, currentPos.yaw);
+        // Do not write the roll if the multimonitor compatibility is turned on
+        if (mXpVersion < 1102) {
+            if (!mMultimonitorCompatibility)
+                XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
+        } else XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
         XPLMSetDataf(mHeadXDataRef, currentPos.x);
         XPLMSetDataf(mHeadYDataRef, currentPos.y);
         XPLMSetDataf(mHeadZDataRef, currentPos.z);
@@ -564,67 +561,4 @@ void CameraControl::set_multimonitor_compatibility(bool compatibility)
 int CameraControl::get_xp_version()
 {
 	return mXpVersion;
-}
-
-float CameraControl::compensate_for_head_roll_drift(CameraPosition &currentPos)
-{
-  float result = 0.0f;
-  
-  //
-  // Head roll has a nasty habit of tilting sideways after flying for
-  // a while.  Here we try to compensate by getting rid of whatever
-  // random offset X-Plane is arbitrarily adding in.
-  //
-  if ((!mOverride) && ((mXpVersion >= 1102) || (!mMultimonitorCompatibility)))
-    {
-      float totalCmdRoll = 0.0f;
-      
-      for (auto command : mCommands)
-        {
-          totalCmdRoll -= command->get_last_roll();
-        }
-      
-      result = currentPos.roll - totalCmdRoll;
-
-#if 0
-      static double   sDriftRollSum = 0;
-      static unsigned sDriftRollCnt = 0;
-      static double   sDriftMin     = 0;
-      static double   sDriftMax     = 0;
-      static unsigned sNoDriftCnt   = 0;
-
-      if (result == 0.0f)
-        {
-          sNoDriftCnt++;
-        }
-
-      sDriftRollSum += result;
-      sDriftRollCnt++;
-
-      if (result < sDriftMin)
-        {
-          sDriftMin = result;
-        }
-      else if (result > sDriftMax)
-        {
-          sDriftMax = result;
-        }
-      
-      if (sDriftRollCnt > 1000)
-        {
-          char temp[256];
-          snprintf(temp, sizeof(temp), "Headshake roll drift: %.8lf avg, min: %.8lf, max: %.8lf, no-drift-cnt: %u\n",
-                   sDriftRollSum / (double) sDriftRollCnt, sDriftMin, sDriftMax, sNoDriftCnt);
-          XPLMDebugString(temp);
-          sDriftRollSum = 0;
-          sDriftRollCnt = 0;
-          sDriftMin = 0;
-          sDriftMax = 0;
-          sNoDriftCnt = 0;
-        }
-#endif
-      
-    }
-
-  return result;
 }

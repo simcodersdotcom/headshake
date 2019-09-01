@@ -26,9 +26,6 @@ class GForceCameraCommand : public CameraCommand
         float get_yaw_response();
         void on_enable() override;
         void on_disable() override;
-        virtual void on_view_changed(int);
-        virtual float get_last_roll();
-        virtual void reset_last_roll();
     protected:
     private:
         unsigned int mDamper;

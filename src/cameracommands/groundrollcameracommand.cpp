@@ -67,7 +67,7 @@ void GroundRollCameraCommand::execute(CameraPosition &position, float elapsedTim
     if (mPitchFilter.size() > 5)
         mPitchFilter.pop_back();
     acc = continue_log(average(mPitchFilter));
-    mLastPitch = quantize(-(acc * mResponse / 10.0f));
+    mLastPitch = -(acc * mResponse / 10.0f);
     position.pitch += mLastPitch;
 
     // Roll
@@ -75,7 +75,7 @@ void GroundRollCameraCommand::execute(CameraPosition &position, float elapsedTim
     if (mYawFilter.size() > 25)
         mYawFilter.pop_back();
     acc = continue_log(average(mYawFilter));
-    mLastRoll -= quantize((acc * mResponse / 5.0f));
+    mLastRoll -= (acc * mResponse / 5.0f);
     position.roll += mLastRoll;
 
     // X
@@ -97,23 +97,4 @@ void GroundRollCameraCommand::set_response(float response)
 float GroundRollCameraCommand::get_response()
 {
     return mResponse;
-}
-
-float GroundRollCameraCommand::get_last_roll()
-{
-  return mLastRoll;
-}
-
-void GroundRollCameraCommand::reset_last_roll()
-{
-    mLastRoll = 0.0f;
-}
-
-// Executed when the view type changes
-void GroundRollCameraCommand::on_view_changed(int viewCode)
-{
-    // If the user enters the virtualcokpit, reset the data
-    if (viewCode == 1026) {
-      this->reset_last_roll();
-    }
 }

@@ -56,7 +56,7 @@ void LookAheadCameraCommand::execute(CameraPosition &position, float elapsedTime
         mTargetAlpha = 0;
     }
     mLastAlpha += (mTargetAlpha - mLastAlpha) / 20.0f;
-    mLastPitch = quantize(mLastAlpha * mResponse);
+    mLastPitch = mLastAlpha * mResponse;
     position.pitch += mLastPitch;
 }
 

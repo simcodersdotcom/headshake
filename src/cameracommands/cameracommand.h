@@ -19,8 +19,6 @@ class CameraCommand : public IVisitable
         virtual void on_view_changed(int);
         virtual void on_enable();
         virtual void on_disable();
-        virtual float get_last_roll();
-        virtual void reset_last_roll();
         void reset_blend();
     protected:
         float get_blend_ratio() const;
