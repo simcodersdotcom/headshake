@@ -497,15 +497,15 @@ float CameraControl::control(float elapsedTime)
 
         currentPos = currentPos + calculatedPos;
         // Set the current camera position
-        XPLMSetDataf(mHeadPitchDataRef, std::round(std::max(std::min(currentPos.pitch, 89.0f), -89.0f) * 100) / 100); // Limit the pitch to -89°/+89°
-        XPLMSetDataf(mHeadHeadingDataRef, std::round(currentPos.yaw * 100) / 100);
+        XPLMSetDataf(mHeadPitchDataRef, std::max(std::min(currentPos.pitch, 89.0f), -89.0f)); // Limit the pitch to -89°/+89°
+        XPLMSetDataf(mHeadHeadingDataRef, currentPos.yaw);
         // Do not write the roll if the multimonitor compatibility is turned on
         if (mXpVersion < 1102) {
             if (!mMultimonitorCompatibility) {
-                XPLMSetDataf(mHeadRollDataRef, std::round(currentPos.roll * 100) / 100);
+                XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
             }
         } else {
-            XPLMSetDataf(mHeadRollDataRef, std::round(currentPos.roll * 100) / 100);
+            XPLMSetDataf(mHeadRollDataRef, currentPos.roll);
         }
         XPLMSetDataf(mHeadXDataRef, currentPos.x);
         XPLMSetDataf(mHeadYDataRef, currentPos.y);
