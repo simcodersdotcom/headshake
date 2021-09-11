@@ -182,7 +182,7 @@ void PistonEngineCameraCommand::execute(CameraPosition &position, float elapsedT
                     // High rpms
 
                     xshake = power / std::abs(engineRpmOutVal[i]) * sin(50 * XPLMGetElapsedTime());
-                    xshake = (power / 2) / std::abs(engineRpmOutVal[i]) * sin(60 * XPLMGetElapsedTime());
+                    yshake = (power / 2) / std::abs(engineRpmOutVal[i]) * sin(60 * XPLMGetElapsedTime());
 
                     if (std::abs(xshake) > std::abs(maxXShake))
                         maxXShake = xshake;
