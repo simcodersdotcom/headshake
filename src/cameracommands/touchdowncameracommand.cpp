@@ -137,7 +137,7 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
     } else {        
         float timeSinceNoseWheelTouchdown = XPLMGetElapsedTime() - noseWheelTouchdownTime;
         if (timeSinceNoseWheelTouchdown > 0 && timeSinceNoseWheelTouchdown < 1.5f) {
-            mLastY = bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
+            mLastY = - bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
             std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + "\n";
             XPLMDebugString(s.c_str());
         }
