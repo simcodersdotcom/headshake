@@ -72,11 +72,11 @@ PLUGIN_API void XPluginDisable(void)
 }
 
 PLUGIN_API void XPluginReceiveMessage(
-    XPLMPluginID,
-    long,
-    void*)
+    XPLMPluginID pluginId,
+    int message,
+    void* param)
 {
-
+    CameraControl::get_instance()->on_receiving_message(pluginId, message, param);
 }
 
 float FlightLoopCallback(

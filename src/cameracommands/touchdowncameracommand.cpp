@@ -4,6 +4,8 @@
 #endif
 
 #include <string>
+#include <cstdint>
+#include <climits>
 
 #include <CHeaders/XPLM/XPLMDataAccess.h>
 #include <CHeaders/XPLM/XPLMUtilities.h>
@@ -33,12 +35,13 @@ TouchdownCameraCommand::TouchdownCameraCommand()
 
     // Nose bump
     mNoseWheelPrevOnGround = true;
-    noseWheelOnGround[0] = 1;
+    noseWheelPosition = 0;
     mGearsOnGroundDataRef = XPLMFindDataRef("sim/flightmodel2/gear/on_ground");
+    mWheelZPositionsDataRef = XPLMFindDataRef("sim/aircraft/parts/acf_gear_znodef");
     mLastY = 0;
     noseWheelTouchdownTime = 0;
     bumpInitialAmplitude = 0.03f;
-    bumpDecayRate = 1.0f;
+    bumpDecayRate = 1.5f;
     bumpFrequency = 1.0f;
 }
 
@@ -128,18 +131,21 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
         }            
     }
 
-    // Bump effect
-    XPLMGetDatavi(mGearsOnGroundDataRef, noseWheelOnGround, 0, 1); // use better way to detect the nose wheel -> sim/aircraft/parts/acf_gear_ynodef
-    if(!mNoseWheelPrevOnGround && noseWheelOnGround[0] == 1) {
-        XPLMDebugString("Bump Effect - Nose wheel touched down.\n");
-        mNoseWheelPrevOnGround = true;
-        noseWheelTouchdownTime = XPLMGetElapsedTime();
-    } else {        
-        float timeSinceNoseWheelTouchdown = XPLMGetElapsedTime() - noseWheelTouchdownTime;
-        if (timeSinceNoseWheelTouchdown > 0 && timeSinceNoseWheelTouchdown < 1.5f) {
-            mLastY = - bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
-            std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + "\n";
-            XPLMDebugString(s.c_str());
+    // Bump effect    
+    if(noseWheelPosition >= 0) // if it's not a taildragger
+    {
+        XPLMGetDatavi(mGearsOnGroundDataRef, wheelsOnGround, 0, noseWheelPosition + 1);
+        if(!mNoseWheelPrevOnGround && wheelsOnGround[noseWheelPosition] == 1) {
+            XPLMDebugString("Bump Effect - Nose wheel touched down.\n");
+            mNoseWheelPrevOnGround = true;
+            noseWheelTouchdownTime = XPLMGetElapsedTime();
+        } else {        
+            float timeSinceNoseWheelTouchdown = XPLMGetElapsedTime() - noseWheelTouchdownTime;
+            if (timeSinceNoseWheelTouchdown > 0 && timeSinceNoseWheelTouchdown < 1.5f) {
+                mLastY = - bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
+                std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + "\n";
+                XPLMDebugString(s.c_str());
+            }
         }
     }
 
@@ -184,4 +190,56 @@ void TouchdownCameraCommand::set_response(float response)
 float TouchdownCameraCommand::get_response()
 {
     return mResponse;
+}
+
+ void TouchdownCameraCommand::on_receiving_message(XPLMPluginID pluginId, int message, void* param)
+{
+    std::string ms = "Bump Effect - Received message from plugin " + std::to_string(pluginId) + " with message: " + std::to_string(message) +  "\n";
+    XPLMDebugString(ms.c_str());
+    
+    if(pluginId == XPLM_PLUGIN_XPLANE && message == XPLM_MSG_PLANE_LOADED) 
+    {
+        int isUserPlane = (intptr_t) param;
+
+        if(isUserPlane == 0)
+        {
+            float wheelZPositions[10];
+            XPLMGetDatavf(mWheelZPositionsDataRef, wheelZPositions, 0, 10);
+            noseWheelPosition = locateNoseWheelPosition(wheelZPositions);
+            std::string s = "Bump Effect - Nose wheel found at position " + std::to_string(noseWheelPosition) + "\n";
+            XPLMDebugString(s.c_str());
+        }
+    }
+}
+
+short TouchdownCameraCommand::locateNoseWheelPosition(float (&wheelZPositions)[10]) 
+{
+    // the nose gear should be the one with the smallest z coordinate (in relation to the CG)
+    // but we still need to exclude taildraggers and we do it by checking that there's no other gear at the same Z coordinate
+    // because this would imply that there are two gears at the same (smallest) Z coordinate, which in turn means there isn't a single
+    // nose gear, but a couple -> taildraggers
+    // a return value of -1 means that the aircraft is a taildragger 
+
+    short noseWheelPositionInArray = 0;
+    float noseWheelZPosition = INT_MAX;
+    bool moreThanOneGearAtSameZ = false;
+
+    for(short i = 0; i < 10; i++) 
+    {
+        std::string s = "Bump Effect - Cycling through the wheel array for the Z axis. Position: " + std::to_string(i) + " Value: " + std::to_string(wheelZPositions[i]) + "\n";
+        XPLMDebugString(s.c_str());
+
+        if(std::fabs(noseWheelZPosition - wheelZPositions[i]) <= 1.0e-05) 
+        {
+            moreThanOneGearAtSameZ = true;
+        }
+        else if(noseWheelZPosition > wheelZPositions[i]) 
+        {
+            noseWheelZPosition = wheelZPositions[i];
+            noseWheelPositionInArray = i;
+            moreThanOneGearAtSameZ = false;
+        }
+    }
+
+    return moreThanOneGearAtSameZ ? -1 : noseWheelPositionInArray;
 }

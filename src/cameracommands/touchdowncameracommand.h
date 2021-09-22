@@ -24,6 +24,7 @@ class TouchdownCameraCommand : public CameraCommand
         XPLMDataRef mBumpFrequency;
         void on_enable() override;
         void on_disable() override;
+        void on_receiving_message(XPLMPluginID, int, void*) override;
 
     protected:
     private:
@@ -46,8 +47,11 @@ class TouchdownCameraCommand : public CameraCommand
         float bumpFrequency;
         float noseWheelTouchdownTime;
         bool mNoseWheelPrevOnGround;
-        int noseWheelOnGround[1];
+        int wheelsOnGround[10];
         XPLMDataRef mGearsOnGroundDataRef;
+        XPLMDataRef mWheelZPositionsDataRef;
+        short locateNoseWheelPosition(float (&wheelZPositions)[10]);
+        short noseWheelPosition;
 };
 
 #endif // TOUCHDOWNCAMERACOMMAND_H
