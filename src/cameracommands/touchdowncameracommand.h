@@ -56,8 +56,12 @@ class TouchdownCameraCommand : public CameraCommand
         int wheelsOnGround[10];
         XPLMDataRef mGearsOnGroundDataRef;
         XPLMDataRef mWheelZPositionsDataRef;
+        XPLMDataRef mTrueThetaDataRef;
         short locateNoseWheelPosition(float (&wheelZPositions)[10]);
         short noseWheelPosition;
+        float lastSavedPitchAngle;
+        float lastSavedPitchAngleTime;
+        short pitchAngleCounter;
 };
 
 #endif // TOUCHDOWNCAMERACOMMAND_H

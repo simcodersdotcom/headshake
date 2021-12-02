@@ -38,14 +38,18 @@ TouchdownCameraCommand::TouchdownCameraCommand()
     noseWheelPosition = 0;
     mGearsOnGroundDataRef = XPLMFindDataRef("sim/flightmodel2/gear/on_ground");
     mWheelZPositionsDataRef = XPLMFindDataRef("sim/aircraft/parts/acf_gear_znodef");
+    mTrueThetaDataRef = XPLMFindDataRef("sim/flightmodel2/position/true_theta");
     mLastY = 0;
     noseWheelTouchdownTime = 0;
-    bumpInitialAmplitude = 0.03f;
+    bumpInitialAmplitude = 0.02f;
     bumpDecayRate = 1.5f;
     bumpFrequency = 1.0f;
-    bumpRollInitialAmplitude = 0.5f;
+    bumpRollInitialAmplitude = 0.01f;
     bumpRollDecayRate = 1.5f;
     bumpRollFrequency = 1.0f;
+    lastSavedPitchAngle = 0;
+    pitchAngleCounter = 0;
+    lastSavedPitchAngleTime = 0;
 }
 
 TouchdownCameraCommand::~TouchdownCameraCommand()
@@ -137,6 +141,10 @@ void TouchdownCameraCommand::on_disable()
     XPLMUnregisterDataAccessor(mBumpInitialAmplitude);
     XPLMUnregisterDataAccessor(mBumpDecayRate);
     XPLMUnregisterDataAccessor(mBumpFrequency);
+
+    XPLMUnregisterDataAccessor(mBumpRollInitialAmplitude);
+    XPLMUnregisterDataAccessor(mBumpRollDecayRate);
+    XPLMUnregisterDataAccessor(mBumpRollFrequency);
 }
 
 void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime)
@@ -172,25 +180,6 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
         }            
     }
 
-    // Bump effect    
-    if(noseWheelPosition >= 0) // if it's not a taildragger
-    {
-        XPLMGetDatavi(mGearsOnGroundDataRef, wheelsOnGround, 0, noseWheelPosition + 1);
-        if(!mNoseWheelPrevOnGround && wheelsOnGround[noseWheelPosition] == 1) {
-            XPLMDebugString("Bump Effect - Nose wheel touched down.\n");
-            mNoseWheelPrevOnGround = true;
-            noseWheelTouchdownTime = XPLMGetElapsedTime();
-        } else {        
-            float timeSinceNoseWheelTouchdown = XPLMGetElapsedTime() - noseWheelTouchdownTime;
-            if (timeSinceNoseWheelTouchdown > 0 && timeSinceNoseWheelTouchdown < 1.5f) {
-                mLastY = - bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
-                mLastRoll = - bumpRollInitialAmplitude * exp(-bumpRollDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpRollFrequency * timeSinceNoseWheelTouchdown);
-                std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + " Roll = " + std::to_string(mLastRoll) + "\n";
-                XPLMDebugString(s.c_str());
-            }
-        }
-    }
-
     // Touchdown effect
     if (!mPrevOnGround && XPLMGetDatai(mOnGroundDataRef)) {
         // At touchdown register the time
@@ -213,6 +202,55 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
             mLastPitch = touchdownshake * 20.0f;
         }
     }
+        
+    // Front wheel bump effect    
+
+    if(noseWheelPosition >= 0) // if it's not a taildragger
+    {       
+        XPLMGetDatavi(mGearsOnGroundDataRef, wheelsOnGround, 0, noseWheelPosition + 1);
+        bool noseWheelOnGround = wheelsOnGround[noseWheelPosition] == 1;
+
+        if(!mNoseWheelPrevOnGround && noseWheelOnGround) 
+        {
+            XPLMDebugString("Bump Effect - Nose wheel touched down.\n");
+            mNoseWheelPrevOnGround = true;
+            noseWheelTouchdownTime = XPLMGetElapsedTime();
+        } 
+        else 
+        {        
+            float timeSinceNoseWheelTouchdown = XPLMGetElapsedTime() - noseWheelTouchdownTime;
+            // saving plane pitch every 100 (kinda arbitrary) flight loops
+            if(!noseWheelOnGround)
+            {
+                if(pitchAngleCounter == 100) 
+                {
+                    pitchAngleCounter = 0;
+                    lastSavedPitchAngle = XPLMGetDataf(mTrueThetaDataRef);
+                    lastSavedPitchAngleTime = XPLMGetElapsedTime();
+                }
+                else
+                {
+                    pitchAngleCounter++;
+            
+                }
+            }
+
+            if (timeSinceNoseWheelTouchdown > 0 && timeSinceNoseWheelTouchdown < 1.5f) 
+            {
+                float verticalSpeedCoeff = std::abs(lastSavedPitchAngle / (noseWheelTouchdownTime - lastSavedPitchAngleTime));                
+                mLastY = - verticalSpeedCoeff * bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
+                mLastRoll = - verticalSpeedCoeff * bumpRollInitialAmplitude * exp(-bumpRollDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpRollFrequency * timeSinceNoseWheelTouchdown);
+                std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + " Roll = " + std::to_string(mLastRoll) + " Vertical Speed Coefficient = " + std::to_string(verticalSpeedCoeff) + "\n";
+                XPLMDebugString(s.c_str());
+            }
+            else
+            {
+                timeSinceNoseWheelTouchdown = 0;
+                noseWheelTouchdownTime = 0;
+            }
+        }
+    }
+
     position.pitch += mLastPitch;
     position.roll += mLastRoll;
     position.x += mLastX;
