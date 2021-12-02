@@ -22,6 +22,9 @@ class TouchdownCameraCommand : public CameraCommand
         XPLMDataRef mBumpInitialAmplitude;
         XPLMDataRef mBumpDecayRate;
         XPLMDataRef mBumpFrequency;
+        XPLMDataRef mBumpRollInitialAmplitude;
+        XPLMDataRef mBumpRollDecayRate;
+        XPLMDataRef mBumpRollFrequency;
         void on_enable() override;
         void on_disable() override;
         void on_receiving_message(XPLMPluginID, int, void*) override;
@@ -45,6 +48,9 @@ class TouchdownCameraCommand : public CameraCommand
         float bumpInitialAmplitude;
         float bumpDecayRate;
         float bumpFrequency;
+        float bumpRollInitialAmplitude;
+        float bumpRollDecayRate;
+        float bumpRollFrequency;
         float noseWheelTouchdownTime;
         bool mNoseWheelPrevOnGround;
         int wheelsOnGround[10];

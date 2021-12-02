@@ -43,6 +43,9 @@ TouchdownCameraCommand::TouchdownCameraCommand()
     bumpInitialAmplitude = 0.03f;
     bumpDecayRate = 1.5f;
     bumpFrequency = 1.0f;
+    bumpRollInitialAmplitude = 0.5f;
+    bumpRollDecayRate = 1.5f;
+    bumpRollFrequency = 1.0f;
 }
 
 TouchdownCameraCommand::~TouchdownCameraCommand()
@@ -89,6 +92,44 @@ void TouchdownCameraCommand::on_enable()
             }
         }, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, this, this);
     XPLMSendMessageToPlugin(datarefEditorId, MSG_ADD_DATAREF, (void*)"simcoders/headshake/touchdowncamera/bump_frequency");
+
+    // bump roll
+
+    mBumpRollInitialAmplitude = XPLMRegisterDataAccessor(
+        "simcoders/headshake/touchdowncamera/bump_roll_initial_amplitude", xplmType_Float, 1, NULL, NULL,
+        [](void* refCon) -> float {
+            if (refCon) return reinterpret_cast<TouchdownCameraCommand*>(refCon)-> bumpRollInitialAmplitude;
+            return 0.01f;
+        }, [](void* refCon, float value) -> void {
+            if (refCon) {
+                reinterpret_cast<TouchdownCameraCommand*>(refCon)-> bumpRollInitialAmplitude = value;
+            }
+        }, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, this, this);
+    XPLMSendMessageToPlugin(datarefEditorId, MSG_ADD_DATAREF, (void*)"simcoders/headshake/touchdowncamera/bump_roll_initial_amplitude");
+
+    mBumpDecayRate = XPLMRegisterDataAccessor(
+        "simcoders/headshake/touchdowncamera/bump_roll_decay_rate", xplmType_Float, 1, NULL, NULL,
+        [](void* refCon) -> float {
+            if (refCon) return reinterpret_cast<TouchdownCameraCommand*>(refCon)-> bumpRollDecayRate;
+            return 0.01f;
+        }, [](void* refCon, float value) -> void {
+            if (refCon) {
+                reinterpret_cast<TouchdownCameraCommand*>(refCon)-> bumpRollDecayRate = value;
+            }
+        }, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, this, this);
+    XPLMSendMessageToPlugin(datarefEditorId, MSG_ADD_DATAREF, (void*)"simcoders/headshake/touchdowncamera/bump_roll_decay_rate");
+
+    mBumpFrequency = XPLMRegisterDataAccessor(
+        "simcoders/headshake/touchdowncamera/bump_roll_frequency", xplmType_Float, 1, NULL, NULL,
+        [](void* refCon) -> float {
+            if (refCon) return reinterpret_cast<TouchdownCameraCommand*>(refCon)-> bumpRollFrequency;
+            return 0.01f;
+        }, [](void* refCon, float value) -> void {
+            if (refCon) {
+                reinterpret_cast<TouchdownCameraCommand*>(refCon)-> bumpRollFrequency = value;
+            }
+        }, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, this, this);
+    XPLMSendMessageToPlugin(datarefEditorId, MSG_ADD_DATAREF, (void*)"simcoders/headshake/touchdowncamera/bump_roll_frequency");
 }
 
 void TouchdownCameraCommand::on_disable()
@@ -143,7 +184,8 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
             float timeSinceNoseWheelTouchdown = XPLMGetElapsedTime() - noseWheelTouchdownTime;
             if (timeSinceNoseWheelTouchdown > 0 && timeSinceNoseWheelTouchdown < 1.5f) {
                 mLastY = - bumpInitialAmplitude * exp(-bumpDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpFrequency * timeSinceNoseWheelTouchdown);
-                std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + "\n";
+                mLastRoll = - bumpRollInitialAmplitude * exp(-bumpRollDecayRate * timeSinceNoseWheelTouchdown) * std::sin(2 * PI * bumpRollFrequency * timeSinceNoseWheelTouchdown);
+                std::string s = "Bump Effect - Time since touch down: " + std::to_string(timeSinceNoseWheelTouchdown) +  " Y offset = " + std::to_string(mLastY) + " Roll = " + std::to_string(mLastRoll) + "\n";
                 XPLMDebugString(s.c_str());
             }
         }
@@ -174,6 +216,7 @@ void TouchdownCameraCommand::execute(CameraPosition &position, float elapsedTime
     position.pitch += mLastPitch;
     position.roll += mLastRoll;
     position.x += mLastX;
+
     position.y += mLastY;
 }
 
