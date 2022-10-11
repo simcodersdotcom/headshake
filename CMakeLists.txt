@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.2)
 
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
@@ -59,7 +59,7 @@ if(CMP_LIN)
 	set_target_properties(LIN_DEBUG_64 PROPERTIES SUFFIX "")
 endif(CMP_LIN)
 
-if(CMP_WIN_64)
+if(CMP_WIN)
 	cmake_policy(SET CMP0015 NEW)
 	set (CMAKE_SYSTEM_NAME Windows)
 	set (CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
@@ -78,19 +78,20 @@ if(CMP_WIN_64)
 	set_target_properties(WIN_RELEASE_64 PROPERTIES PREFIX "")
 	set_target_properties(WIN_RELEASE_64 PROPERTIES OUTPUT_NAME "win.xpl")
 	set_target_properties(WIN_RELEASE_64 PROPERTIES SUFFIX "")
-endif(CMP_WIN_64)
+endif(CMP_WIN)
 
 if (CMP_MAC)
 	cmake_policy(SET CMP0042 NEW)
 	set (CMAKE_SYSTEM_NAME Darwin)
 	set (CMAKE_CXX_COMPILER g++)
+	set (CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 
 	# --------------------
 	# Release - Mac 64
 	# --------------------
 	add_library(MAC_RELEASE_64 SHARED ${SOURCES})
 
-	target_compile_options(MAC_RELEASE_64 PRIVATE ${GCC_DEFAULT_FLAGS} -arch x86_64 -nostdinc++ -I/Library/Developer/CommandLineTools/usr/include/c++/v1 -DXPLM200 -DAPL)
+	target_compile_options(MAC_RELEASE_64 PRIVATE ${GCC_DEFAULT_FLAGS} -nostdinc++ -I/Library/Developer/CommandLineTools/usr/include/c++/v1 -DXPLM200 -DAPL)
 	target_link_libraries(MAC_RELEASE_64 "-F${SDK_PATH}/Libraries/Mac" "-framework XPLM" "-framework XPWidgets" "-framework OpenGL" "-nodefaultlibs" "-lc++" "-lc++abi" "-lm" "-lc")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES LINK_FLAGS "-m64 -fvisibility=hidden")
 	set_target_properties(MAC_RELEASE_64 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../bin/Release/HeadShake/64/")
