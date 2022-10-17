@@ -407,6 +407,14 @@ void CameraControl::reset_view()
 	}
 }
 
+void CameraControl::on_receiving_message(XPLMPluginID pluginId, int message, void* param) 
+{
+    // Send the on_receiving_message to the commands
+    for (auto command : mCommands) {
+        command->on_receiving_message(pluginId, message, param);
+    }
+}
+
 void CameraControl::freeze()
 {
     mFreezed1 = true;
