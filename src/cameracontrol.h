@@ -77,6 +77,7 @@ private:
     /** DataRefs */
     XPLMDataRef mPausedDataRef;
     XPLMDataRef mCinemaVeriteDataRef;
+    XPLMDataRef mG_LoadedCameraDataRef;
     XPLMDataRef mViewTypeDataRef;
     XPLMDataRef mHeadHeadingDataRef;
     XPLMDataRef mHeadPitchDataRef;
