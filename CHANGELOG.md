@@ -1,3 +1,25 @@
+
+Stable release: v1.14
+--------------------
+- Compatibility with X-Plane 12 gLoadedCamera
+
+Stable release: v1.13
+--------------------
+- Support for Apple ARM architecture
+
+Stable release: v1.12
+--------------------
+- Y-Axis camera shake for piston engines
+- Fix for automatic roll reset
+
+Stable release: v1.11
+--------------------
+- GForceCameraCommand: added a new dataref to control general sensitivity
+
+Stable release: v1.10
+--------------------
+- GForceCameraCommand & GroundRollCameraCommand: fixed the vibrations that may occur while braking on some airplanes
+
 Stable release: v1.9
 --------------------
 - Compatibility with X-Plane 11 glance views
