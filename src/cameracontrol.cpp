@@ -67,6 +67,7 @@ CameraControl::CameraControl()
     mStopCommand = XPLMCreateCommand("simcoders/headshake/stop", "Stop HeadShake. It will restart once the view is not controlled anymore by another plugin.");
     // Fill the datarefs
     mCinemaVeriteDataRef = XPLMFindDataRef("sim/graphics/view/cinema_verite");
+    mG_LoadedCameraDataRef = XPLMFindDataRef("sim/graphics/view/gloaded_internal_cam");
     mPausedDataRef = XPLMFindDataRef("sim/time/paused");
     mViewTypeDataRef = XPLMFindDataRef("sim/graphics/view/view_type");
     mHeadHeadingDataRef = XPLMFindDataRef("sim/graphics/view/pilots_head_psi");
@@ -431,7 +432,8 @@ float CameraControl::control(float elapsedTime)
         }
     }
     // Make sure that we're in the virtual cockpit, cinema verite is not active and the sim is not paused
-    mError = XPLMGetDatai(mCinemaVeriteDataRef) > 0;
+    // Note: if gLoaded camera is defined then we don't care about the state of CinemaVerite
+    mError = (mG_LoadedCameraDataRef == nullptr) ? XPLMGetDatai(mCinemaVeriteDataRef) > 0 : false;
     if (cameraType != 1026 || XPLMGetDatai(mPausedDataRef) || mError) {
         return 1;
     }
