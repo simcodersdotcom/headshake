@@ -56,6 +56,11 @@ void CameraCommand::on_disable()
 
 }
 
+void CameraCommand::on_receiving_message(XPLMPluginID, int, void*)
+{
+
+}
+
 float CameraCommand::get_blend_ratio() const
 {
     return mBlendTime / 2;

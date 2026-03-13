@@ -19,6 +19,7 @@ public:
     void accept(IVisitor&);
     void on_enable();
     void on_disable();
+    void on_receiving_message(XPLMPluginID, int, void*);
     bool get_multimonitor_compatibility() const;
     void set_multimonitor_compatibility(bool);
     bool error();
